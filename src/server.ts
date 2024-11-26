@@ -24,10 +24,10 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const startServer = async () => {
   await mongoose.connect(config.database_url as string);
-  console.log('Database connection successfull');
+  console.log('\x1b[36mDatabase connection successfull\x1b[0m');
 
   server = app.listen(config.server_port || 5000, () => {
-    console.log('Server is listening on port', config.server_port || 5000);
+    console.log(`\x1b[32mServer is listening on port ${config.server_port || 5000}\x1b[0m`);
   });
 };
 
