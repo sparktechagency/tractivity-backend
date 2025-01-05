@@ -16,4 +16,8 @@ export default {
   jwt_access_token_expiresin: process.env.JWT_ACCESS_TOKEN_EXPIRESIN,
   jwt_refresh_token_secret: process.env.JWT_REFRESH_TOKEN_SECRET,
   jwt_refresh_token_expiresin: process.env.JWT_REFRESH_TOKEN_EXPIRESIN,
+
+  // SMTP credentials
+  gmail_app_user: process.env.GMAIL_APP_USER,
+  gmail_app_password: process.env.GMAIL_APP_PASSWORD,
 };

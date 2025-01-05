@@ -1,3 +1,4 @@
+import 'express-async-errors'; 
 import express, { Application, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import cors from 'cors';
@@ -7,9 +8,9 @@ import cookieParser from 'cookie-parser';
 import fileUpload from 'express-fileupload';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
-import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import notFound from './app/middlewares/notFound';
-import routers from './app/routers/version1';
+import routers from './app/routers';
+import globalErrorHandler from './app/middlewares/globalErrorHandler';
 
 const app: Application = express();
 
@@ -30,15 +31,19 @@ const limiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many request found from your IP. Please try again after 15 minutes.',
 });
-app.use(limiter);
+// app.use(limiter);
 
 // application middleware
-app.use('/v1', routers)
+app.use('/', routers)
 
 app.get('/health_check', (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({
     message: 'Welcome to the server. Server health is good.',
   });
+});
+
+app.get('/favicon.ico', (req: Request, res: Response) => {
+  res.status(204).end(); // No Content
 });
 
 // Error handling middlewares

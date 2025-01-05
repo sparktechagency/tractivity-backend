@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 interface ICustomError extends Error {
@@ -21,7 +21,7 @@ const prodErrorResponse = (error: ICustomError, res: Response): Response => {
   });
 };
 
-const globalErrorHandler = (err: ICustomError, req: Request, res: Response): void => {
+const globalErrorHandler = (err: ICustomError, req: Request, res: Response, next: NextFunction): void => {
   err.statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
   err.message = err.message || 'Something went wrong, try again later';
 
@@ -33,6 +33,7 @@ const globalErrorHandler = (err: ICustomError, req: Request, res: Response): voi
     err.statusCode = StatusCodes.BAD_REQUEST;
   }
 
+  console.log("error here", err)
   // Handle Mongoose Duplicate Key Error (code 11000)
   if (err.code && err.code === 11000) {
     err.message = `${Object.keys(err.keyValue || {}).join(', ')} already exists!`;
