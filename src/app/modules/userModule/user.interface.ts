@@ -1,11 +1,5 @@
 import { Document } from 'mongoose';
 
-enum Gender {
-  Male = 'male',
-  Female = 'female',
-  Other = 'other',
-}
-
 interface IUser extends Document {
   fullName: string;
   email: string;

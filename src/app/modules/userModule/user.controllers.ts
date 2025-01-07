@@ -19,7 +19,7 @@ const createUser = async (req: Request, res: Response) => {
   expireDate.setMinutes(expireDate.getMinutes() + 30);
 
   userData.verification = {
-    code: IdGenerator.generateId(),
+    code: IdGenerator.generateNumberId(),
     expireDate,
   };
 
