@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     roles: [{
       type: String,
-      enum: ['Volunteer', 'Organizer', 'Administrator'],
+      enum: ['volunteer', 'organizer', 'administrator'],
       default: 'Volunteer',
     }],
     status: {
