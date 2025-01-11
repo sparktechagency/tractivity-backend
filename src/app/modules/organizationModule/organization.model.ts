@@ -29,5 +29,10 @@ const organizationSchema = new mongoose.Schema<IOrganization>(
   },
 );
 
+organizationSchema.index({
+  name: 'text',
+  description: 'text'
+})
+
 const Organization = mongoose.model<IOrganization>('organization', organizationSchema);
 export default Organization;

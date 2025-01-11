@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema<IUser>(
       unique: true,
       required: true,
     },
+    profession: String,
     password: {
       type: String,
       trim: true,
@@ -110,6 +111,8 @@ userSchema.methods.comparePassword = function (userPlanePassword: string) {
 userSchema.methods.compareVerificationCode = function (userPlaneCode: string) {
   return bcrypt.compareSync(userPlaneCode, this.verification.code);
 };
+
+userSchema.index({ fullName: 'text', email: 'text', address: 'text', phone: 'text' }); 
 
 const User = mongoose.model<IUser>('user', userSchema);
 export default User;

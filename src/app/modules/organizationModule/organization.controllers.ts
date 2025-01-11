@@ -43,9 +43,9 @@ const createOrganization = async (req: Request, res: Response) => {
 const retriveOrganizationsByCreatorId = async (req: Request, res: Response) => {
   const { creatorId } = req.params;
   const organizations = await organizationService.getAllOrganizationsByCreator(creatorId);
-  if (!organizations) {
-    throw new CustomError.NotFoundError('No organizations found for the creator!');
-  }
+//   if (!organizations) {
+//     throw new CustomError.NotFoundError('No organizations found for the creator!');
+//   }
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

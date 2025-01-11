@@ -8,6 +8,8 @@ import privacyPolicyRouter from '../modules/privacyPolicyModule/privacyPolicy.ro
 import termsConditionRouter from '../modules/termsConditionModule/termsCondition.routes';
 import onboardingRouter from '../modules/onboardingModule/onboarding.routes';
 import organizationRouter from '../modules/organizationModule/organization.routes';
+import missionRouter from '../modules/missionModule/mission.routes';
+import organizerRouter from '../modules/organizerModule/organizer.routes';
 
 const routersVersionOne = express.Router();
 
@@ -18,6 +20,8 @@ routersVersionOne.use('/privacy-policy', privacyPolicyRouter)
 routersVersionOne.use('/terms-condition', termsConditionRouter)
 routersVersionOne.use('/onboarding', onboardingRouter)
 routersVersionOne.use('/organization', organizationRouter)
+routersVersionOne.use('/mission', missionRouter)
+routersVersionOne.use('/organizer', organizerRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 

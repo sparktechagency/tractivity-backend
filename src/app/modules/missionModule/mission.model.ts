@@ -23,9 +23,15 @@ const missionSchema = new mongoose.Schema<IMission>(
       type: String,
       required: true,
     },
-    connectedOrganization: [String],
-    requestedOrganizer: [String],
-    connectedOrganizer: [String],
+    connectedOrganizations: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'organization',
+    }],
+    requestedOrganizers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+    }],
+    connectedOrganizers: [],
   },
   {
     timestamps: true,

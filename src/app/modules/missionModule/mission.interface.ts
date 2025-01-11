@@ -10,9 +10,9 @@ interface IMission extends Document{
     name: string;
     description: string;
     // requestedOrganization: string[];
-    connectedOrganization: string[];
-    requestedOrganizer: string[];
-    connectedOrganizer: string[];
+    connectedOrganizations: string[];
+    requestedOrganizers: string[];
+    connectedOrganizers: string[];
 }
 
 export default IMission;

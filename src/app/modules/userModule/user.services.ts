@@ -34,11 +34,20 @@ const deleteSpecificUser = async (id: string) => {
   return await User.deleteOne({ _id: id });
 };
 
+// service for search volunteers
+const searchVolunteers = async(query: string) => {
+  return await User.find({
+    $text: {$search: query},
+    roles: {$in: ['volunteer']}
+  }).select('image fullName profession')
+}
+
 export default {
   createUser,
   getSpecificUser,
   getSpecificUserByEmail,
   updateSpecificUser,
   deleteSpecificUser,
-  getAllUser
+  getAllUser,
+  searchVolunteers
 };
