@@ -203,7 +203,7 @@ const retriveSpecificVolunteerInEvent = async (req: Request, res: Response) => {
 
 // controller for search events
 const searchEvents = async (req: Request, res: Response) => {
-  const { query} = req.query;
+  const { query } = req.query;
   const events = await eventServices.searchEvents(query as string);
 
   sendResponse(res, {
@@ -239,23 +239,94 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
     message: 'Events retrive successfull',
     data: events,
   });
-}
+};
 
 // controller for retrive specific event by id
 const retriveSpecificEventsById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const event = await eventServices.retriveSpecificEventById(id);
-  if(!event){
+  if (!event) {
     throw new CustomError.BadRequestError('Event not found!');
   }
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
-    status:'success',
+    status: 'success',
     message: 'Event retrive successfull',
     data: event,
   });
-}
+};
+
+// controller for volunteer start work
+const volunteerStartWork = async (req: Request, res: Response) => {
+  const { eventId, volunteerId } = req.body;
+  const event = await eventServices.retriveSpecificEventById(eventId);
+  if (!event) {
+    throw new CustomError.BadRequestError('Event not found!');
+  }
+
+  let volunteerInEvent = event.joinedVolunteer.find((v: any) => v.volunteer.toString() === volunteerId);
+  if (!volunteerInEvent) {
+    throw new CustomError.BadRequestError('No volunteer found in the event!');
+  }
+
+  if (volunteerInEvent.workStatus !== 'intialized') {
+    throw new CustomError.BadRequestError('Volunteer has already procceed the work!');
+  }
+
+  if (volunteerInEvent.startInfo.isStart) {
+    throw new CustomError.BadRequestError('Volunteer has already started work!');
+  }
+
+  volunteerInEvent.startInfo.isStart = true;
+  volunteerInEvent.startInfo.startDate = new Date();
+  volunteerInEvent.workStatus = 'running';
+
+  await event.save();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Volunteer start work successfull',
+    data: volunteerInEvent,
+  });
+};
+
+// controller for volunteer end work
+const volunteerEndWork = async (req: Request, res: Response) => {
+  const { eventId, volunteerId } = req.body;
+  const event = await eventServices.retriveSpecificEventById(eventId);
+  if (!event) {
+    throw new CustomError.BadRequestError('Event not found!');
+  }
+
+  let volunteerInEvent = event.joinedVolunteer.find((v: any) => v.volunteer.toString() === volunteerId);
+  if (!volunteerInEvent) {
+    throw new CustomError.BadRequestError('No volunteer found in the event!');
+  }
+  
+  if (volunteerInEvent.workStatus !== 'running') {
+    throw new CustomError.BadRequestError('Work has not currently running to end!');
+  }
+
+  if (!volunteerInEvent.startInfo.isStart) {
+    throw new CustomError.BadRequestError('Volunteer has not started work yet!');
+  }
+
+  const endDate = new Date();
+  volunteerInEvent.startInfo.isStart = false;
+  volunteerInEvent.totalHours += (endDate.getTime() - volunteerInEvent.startInfo.startDate.getTime()) / 3600000;
+  volunteerInEvent.workStatus = 'complete';
+
+  await event.save();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Volunteer end work successfull',
+    data: volunteerInEvent,
+  });
+};
 
 export default {
   createNewEvent,
@@ -268,4 +339,6 @@ export default {
   retriveAllEventsByMissionId,
   retriveSpecificEventsById,
   retriveEventsByVolunteer,
+  volunteerStartWork,
+  volunteerEndWork,
 };

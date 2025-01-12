@@ -11,5 +11,7 @@ volunteerRouter.get('/event/search', eventControllers.searchEvents)
 volunteerRouter.get('/event/:volunteerId/search', eventControllers.retriveEventsByVolunteer)
 volunteerRouter.get('/event/retrive/mission/:id', eventControllers.retriveAllEventsByMissionId);
 volunteerRouter.delete('/event/invitation/reject/:invitationId', invitationControllers.deleteEventInviation);
+volunteerRouter.patch('/event/start-work', eventControllers.volunteerStartWork)
+volunteerRouter.patch('/event/end-work', eventControllers.volunteerEndWork)
 
 export default volunteerRouter;
