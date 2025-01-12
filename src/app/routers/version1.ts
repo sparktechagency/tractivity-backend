@@ -11,6 +11,7 @@ import organizationRouter from '../modules/organizationModule/organization.route
 import missionRouter from '../modules/missionModule/mission.routes';
 import organizerRouter from '../modules/organizerModule/organizer.routes';
 import volunteerRouter from '../modules/volunteerModule/volunteer.routes';
+import donationRouter from '../modules/donationModule/donation.routes';
 
 const routersVersionOne = express.Router();
 
@@ -24,6 +25,7 @@ routersVersionOne.use('/organization', organizationRouter)
 routersVersionOne.use('/mission', missionRouter)
 routersVersionOne.use('/organizer', organizerRouter)
 routersVersionOne.use('/volunteer', volunteerRouter)
+routersVersionOne.use('/donation', donationRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 
