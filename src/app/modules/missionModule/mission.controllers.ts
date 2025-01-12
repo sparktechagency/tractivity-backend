@@ -156,6 +156,19 @@ const searchOrganizer = async (req: Request, res: Response) => {
   });
 };
 
+// retrive missions by organization
+const retriveMissionsByOrganization = async (req: Request, res: Response) => {
+  const { organizationId } = req.params;
+  const missions = await missionServices.getAllMissionsByOrganization(organizationId);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status:'success',
+    message: 'Mission retrive successfull',
+    data: missions,
+  });
+}
+
 export default {
   createMission,
   retriveMissionsByCreatorId,
@@ -163,4 +176,5 @@ export default {
   deleteSpecificOMission,
   searchOrganization,
   searchOrganizer,
+  retriveMissionsByOrganization,
 };

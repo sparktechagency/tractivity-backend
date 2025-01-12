@@ -10,6 +10,7 @@ import onboardingRouter from '../modules/onboardingModule/onboarding.routes';
 import organizationRouter from '../modules/organizationModule/organization.routes';
 import missionRouter from '../modules/missionModule/mission.routes';
 import organizerRouter from '../modules/organizerModule/organizer.routes';
+import volunteerRouter from '../modules/volunteerModule/volunteer.routes';
 
 const routersVersionOne = express.Router();
 
@@ -22,6 +23,7 @@ routersVersionOne.use('/onboarding', onboardingRouter)
 routersVersionOne.use('/organization', organizationRouter)
 routersVersionOne.use('/mission', missionRouter)
 routersVersionOne.use('/organizer', organizerRouter)
+routersVersionOne.use('/volunteer', volunteerRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 

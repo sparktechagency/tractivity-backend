@@ -9,6 +9,7 @@ import sendResponse from '../../../shared/sendResponse';
 import { StatusCodes } from 'http-status-codes';
 import eventServices from './event.services';
 import dateChacker from '../../../utils/dateChacker';
+import invitationServices from '../invitationModule/invitation.services';
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
@@ -74,6 +75,16 @@ const createNewEvent = async (req: Request, res: Response) => {
     lng: Number(eventData.longitude),
   };
 
+  // move organizer from requestedOrganizer to connectedOrganizer list
+  const organizerFromRequestedOrganizerList = mission.requestedOrganizers.find((reqO) => reqO.toString() === eventData.creatorId);
+  if (organizerFromRequestedOrganizerList) {
+    mission.connectedOrganizers.push(organizerFromRequestedOrganizerList);
+    mission.requestedOrganizers = mission.requestedOrganizers.filter((reqO) => reqO.toString() !== eventData.creatorId);
+    await mission.save();
+  } else {
+    throw new CustomError.BadRequestError('Volunteer is not invited to this event!');
+  }
+
   const event = await eventServices.createEvent(eventData);
 
   //   // create new invitation
@@ -90,6 +101,12 @@ const createNewEvent = async (req: Request, res: Response) => {
       await Invitation.create(invitationPayload);
     }),
   );
+
+  const invitation = await invitationServices.retriveInvitationByConsumerId(eventData.creatorId);
+  if (invitation) {
+    invitation.status = 'accepted';
+    await invitation.save();
+  }
 
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
@@ -116,7 +133,7 @@ const searchVolunteers = async (req: Request, res: Response) => {
 // controller for retrive all events by organizer/creator
 const retriveEventsByOrganizer = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const {status} = req.query
+  const { status } = req.query;
   const events = await eventServices.retriveEventsByOrganizer(id, status as string);
 
   sendResponse(res, {
@@ -146,7 +163,7 @@ const deleteSpecificEvent = async (req: Request, res: Response) => {
 // controller for update specific event status by id
 const updateSpecificEvent = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const updatedEvent = await eventServices.updateSpecificEventById(id, {status: 'deliveried'});
+  const updatedEvent = await eventServices.updateSpecificEventById(id, { status: 'deliveried' });
 
   if (!updatedEvent?.isModified) {
     throw new CustomError.BadRequestError('Failed to update event!');
@@ -159,10 +176,96 @@ const updateSpecificEvent = async (req: Request, res: Response) => {
   });
 };
 
+// controller for retrive specific invited volunteer in event
+const retriveSpecificVolunteerInEvent = async (req: Request, res: Response) => {
+  const { eventId, volunteerId } = req.body;
+  const event = await eventServices.retriveSpecificEventById(eventId);
+  if (!event) {
+    throw new CustomError.BadRequestError('Event not found!');
+  }
+
+  let volunteerInEvent = event.invitedVolunteer.find((v: any) => v.volunteer.toString() === volunteerId);
+  if (!volunteerInEvent) {
+    volunteerInEvent = event.joinedVolunteer.find((v: any) => v.volunteer.toString() === volunteerId);
+  }
+
+  if (!volunteerInEvent) {
+    throw new CustomError.BadRequestError('No volunteer found in the event!');
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Volunteer retrive successfull',
+    data: volunteerInEvent,
+  });
+};
+
+// controller for search events
+const searchEvents = async (req: Request, res: Response) => {
+  const { query} = req.query;
+  const events = await eventServices.searchEvents(query as string);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Event retrive successfull',
+    data: events,
+  });
+};
+
+// controller for search events
+const retriveEventsByVolunteer = async (req: Request, res: Response) => {
+  const { volunteerId } = req.params;
+  const { query, status, date } = req.query;
+  const events = await eventServices.retriveEventsByVolunteer(volunteerId, query as string, status as string, date as string);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Event retrive successfull',
+    data: events,
+  });
+};
+
+// retrive all events by missionId
+const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const events = await eventServices.retriveAllEventsByMissionId(id);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Events retrive successfull',
+    data: events,
+  });
+}
+
+// controller for retrive specific event by id
+const retriveSpecificEventsById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const event = await eventServices.retriveSpecificEventById(id);
+  if(!event){
+    throw new CustomError.BadRequestError('Event not found!');
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status:'success',
+    message: 'Event retrive successfull',
+    data: event,
+  });
+}
+
 export default {
   createNewEvent,
   searchVolunteers,
   retriveEventsByOrganizer,
   deleteSpecificEvent,
   updateSpecificEvent,
+  retriveSpecificVolunteerInEvent,
+  searchEvents,
+  retriveAllEventsByMissionId,
+  retriveSpecificEventsById,
+  retriveEventsByVolunteer,
 };

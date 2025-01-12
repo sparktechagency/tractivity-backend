@@ -31,7 +31,10 @@ const missionSchema = new mongoose.Schema<IMission>(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
     }],
-    connectedOrganizers: [],
+    connectedOrganizers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+    }],
   },
   {
     timestamps: true,

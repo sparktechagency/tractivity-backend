@@ -16,6 +16,24 @@ const retriveEventsByOrganizer = async (id: string, status: string) => {
   return await Event.find(query);
 };
 
+// service for retrive specific event by organizer/creator
+const retriveSpecificEventById = async (id: string) => {
+  return await Event.findOne({ _id: id }).populate({
+    path: 'missionId',
+    select: 'name connectedOrganizer connectedOrganizations',
+    populate: [
+      {
+        path: 'connectedOrganizations',
+        select: 'name',
+      },
+      {
+        path: 'connectedOrganizers',
+        select: 'image fullName',
+      }
+    ]
+  });
+};
+
 // service for delete specific event by id
 const deleteSpecificEventById = async (id: string) => {
   return await Event.deleteOne({ _id: id });
@@ -26,9 +44,98 @@ const updateSpecificEventById = async (id: string, data: Partial<IEvent>) => {
   return await Event.findOneAndUpdate({ _id: id }, data, { new: true });
 };
 
+// service for search events
+const searchEvents = async (searchQuery: string) => {
+
+  // Execute the query
+  return await Event.find({$text: {$search: searchQuery}}).populate({
+    path: 'missionId',
+    select: 'connectedOrganizations connectedOrganizers',
+    populate: [
+      {
+        path: 'connectedOrganizations',
+        select: 'name',
+      },
+      {
+        path: 'connectedOrganizers',
+        select: 'fullName image',
+      },
+    ],
+  });
+};
+
+// service for search events
+const retriveEventsByVolunteer = async (
+  volunteerId: string,
+  searchQuery: string,
+  status: string,
+  date: string
+) => {
+  type Query = {
+    joinedVolunteer?: { $elemMatch: { volunteer: string } };
+    $text?: { $search: string };
+    status?: string;
+    date?: { $gte: Date; $lt: Date };
+  };
+
+  const query: Query = {};
+
+  // Filter by volunteerId in the joinedVolunteer array
+  if (volunteerId) {
+    query.joinedVolunteer = { $elemMatch: { volunteer: volunteerId } };
+  }
+
+  // Add full-text search if searchQuery is provided
+  if (searchQuery) {
+    query.$text = { $search: searchQuery };
+  }
+
+  // Add status filter if provided
+  if (status) {
+    query.status = status;
+  }
+
+  // Add date filter if provided (specific day)
+  if (date) {
+    const targetDate = new Date(date);
+    const nextDate = new Date(targetDate);
+    nextDate.setDate(targetDate.getDate() + 1); // Increment by 1 day
+
+    query.date = {
+      $gte: targetDate, // Start of the day
+      $lt: nextDate, // Start of the next day
+    };
+  }
+
+  // Execute the query
+  return await Event.find(query).populate({
+    path: 'missionId',
+    select: 'connectedOrganizations connectedOrganizers',
+    populate: [
+      {
+        path: 'connectedOrganizations',
+        select: 'name',
+      },
+      {
+        path: 'connectedOrganizers',
+        select: 'fullName image',
+      },
+    ],
+  });
+};
+
+// service retrive all events by missionId
+const retriveAllEventsByMissionId = async (id: string) => {
+  return await Event.find({ missionId: id }).select('-invitedVolunteer -joinedVolunteer ');
+};
+
 export default {
   createEvent,
   retriveEventsByOrganizer,
+  retriveSpecificEventById,
   deleteSpecificEventById,
   updateSpecificEventById,
+  searchEvents,
+  retriveAllEventsByMissionId,
+  retriveEventsByVolunteer,
 };

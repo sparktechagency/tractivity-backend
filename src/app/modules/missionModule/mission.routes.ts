@@ -9,5 +9,6 @@ missionRouter.get("/retrive/creator/:creatorId", missionControllers.retriveMissi
 missionRouter.delete("/delete/:id", missionControllers.deleteSpecificOMission);
 missionRouter.get("/organization/search", missionControllers.searchOrganization);
 missionRouter.get("/organizer/search", missionControllers.searchOrganizer);
+missionRouter.get("/retrive/organization/:organizationId", missionControllers.retriveMissionsByOrganization);
 
 export default missionRouter;

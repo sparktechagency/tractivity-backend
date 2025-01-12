@@ -16,8 +16,14 @@ const deleteOrganizationById = async (id: string) => {
   return await Organization.deleteOne({ _id: id });
 };
 
+// service for retrive all organizations
+const retriveAllOrganizations = async () => {
+  return await Organization.find();
+}
+
 export default {
   createOrganization,
   getAllOrganizationsByCreator,
   deleteOrganizationById,
+  retriveAllOrganizations
 };

@@ -10,12 +10,12 @@ const createOrganization = async (req: Request, res: Response) => {
   const organizationData = req.body;
 
   const creator = await userServices.getSpecificUser(organizationData.creatorId);
-  if(!creator){
+  if (!creator) {
     throw new CustomError.BadRequestError('No creator found by the creatorId!');
   }
 
   // check the creator has administrator permission
-  if(!creator.roles.includes('administrator')){
+  if (!creator.roles.includes('administrator')) {
     throw new CustomError.BadRequestError('Creator does not have administrator permission!');
   }
 
@@ -23,7 +23,7 @@ const createOrganization = async (req: Request, res: Response) => {
     creatorId: organizationData.creatorId,
     name: creator.fullName,
     creatorRole: 'administrator',
-  }
+  };
 
   const organization = await organizationService.createOrganization(organizationData);
 
@@ -43,9 +43,9 @@ const createOrganization = async (req: Request, res: Response) => {
 const retriveOrganizationsByCreatorId = async (req: Request, res: Response) => {
   const { creatorId } = req.params;
   const organizations = await organizationService.getAllOrganizationsByCreator(creatorId);
-//   if (!organizations) {
-//     throw new CustomError.NotFoundError('No organizations found for the creator!');
-//   }
+  //   if (!organizations) {
+  //     throw new CustomError.NotFoundError('No organizations found for the creator!');
+  //   }
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -70,8 +70,21 @@ const deleteSpecificOrganization = async (req: Request, res: Response) => {
   });
 };
 
+// controller for retrive all organization
+const retriveOrganizations = async (req: Request, res: Response) => {
+  const organizations = await organizationService.retriveAllOrganizations();
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Organizations retrive successfull',
+    data: organizations,
+  });
+};
+
 export default {
   createOrganization,
   retriveOrganizationsByCreatorId,
-  deleteSpecificOrganization
+  deleteSpecificOrganization,
+  retriveOrganizations,
 };
