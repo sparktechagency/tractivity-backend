@@ -21,7 +21,6 @@ const getDonationsByDonerId = async (donerId: string) => {
   return await Donation.find({ 'doner.donerId': donerId });
 };
 
-
 export default {
   createDonation,
   getAllDonations,

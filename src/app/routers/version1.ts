@@ -12,6 +12,7 @@ import missionRouter from '../modules/missionModule/mission.routes';
 import organizerRouter from '../modules/organizerModule/organizer.routes';
 import volunteerRouter from '../modules/volunteerModule/volunteer.routes';
 import donationRouter from '../modules/donationModule/donation.routes';
+import friendshipRouter from '../modules/friendshipModule/friendship.routes';
 
 const routersVersionOne = express.Router();
 
@@ -26,6 +27,7 @@ routersVersionOne.use('/mission', missionRouter)
 routersVersionOne.use('/organizer', organizerRouter)
 routersVersionOne.use('/volunteer', volunteerRouter)
 routersVersionOne.use('/donation', donationRouter)
+routersVersionOne.use('/friendship', friendshipRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 
