@@ -13,6 +13,9 @@ import organizerRouter from '../modules/organizerModule/organizer.routes';
 import volunteerRouter from '../modules/volunteerModule/volunteer.routes';
 import donationRouter from '../modules/donationModule/donation.routes';
 import friendshipRouter from '../modules/friendshipModule/friendship.routes';
+import conversationRouter from '../modules/conversationModule/conversations.routes';
+import messageRouter from '../modules/messageModule/message.routes';
+import attachmentRouter from '../modules/attachmentModule/attachment.routes';
 
 const routersVersionOne = express.Router();
 
@@ -28,6 +31,9 @@ routersVersionOne.use('/organizer', organizerRouter)
 routersVersionOne.use('/volunteer', volunteerRouter)
 routersVersionOne.use('/donation', donationRouter)
 routersVersionOne.use('/friendship', friendshipRouter)
+routersVersionOne.use('/conversation', conversationRouter)
+routersVersionOne.use('/message', messageRouter)
+routersVersionOne.use('/attachment', attachmentRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 
