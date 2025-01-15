@@ -56,5 +56,13 @@ const donationSchema = new mongoose.Schema<IDonation>({
     // versionKey: false
 })
 
+
+donationSchema.index({
+    email: 'text',
+    firstName: 'text',
+    lastName: 'text',
+    state: 'text',
+  });
+
 const Donation = mongoose.model<IDonation>("donation", donationSchema);
 export default Donation;

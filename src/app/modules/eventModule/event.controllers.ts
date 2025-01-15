@@ -82,7 +82,7 @@ const createNewEvent = async (req: Request, res: Response) => {
     mission.requestedOrganizers = mission.requestedOrganizers.filter((reqO) => reqO.toString() !== eventData.creatorId);
     await mission.save();
   } else {
-    throw new CustomError.BadRequestError('Volunteer is not invited to this event!');
+    throw new CustomError.BadRequestError('The organizer is not invited of mission to creating event!');
   }
 
   const event = await eventServices.createEvent(eventData);
@@ -112,7 +112,7 @@ const createNewEvent = async (req: Request, res: Response) => {
     statusCode: StatusCodes.CREATED,
     status: 'success',
     message: 'Event creation successfull',
-    data: mission,
+    data: event,
   });
 };
 
@@ -304,7 +304,7 @@ const volunteerEndWork = async (req: Request, res: Response) => {
   if (!volunteerInEvent) {
     throw new CustomError.BadRequestError('No volunteer found in the event!');
   }
-  
+
   if (volunteerInEvent.workStatus !== 'running') {
     throw new CustomError.BadRequestError('Work has not currently running to end!');
   }
@@ -328,6 +328,32 @@ const volunteerEndWork = async (req: Request, res: Response) => {
   });
 };
 
+// controller for retrive all events
+const retriveAllEvents = async (req: Request, res: Response) => {
+  const { query, status } = req.query;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const events = await eventServices.retriveAllEvents(query as string, status as string, skip, limit);
+
+  const totalEvents = events.length || 0;
+  const totalPages = Math.ceil(totalEvents / limit);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Events retrive successfull',
+    meta: {
+      totalData: totalEvents,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
+    data: events,
+  });
+};
+
 export default {
   createNewEvent,
   searchVolunteers,
@@ -341,4 +367,5 @@ export default {
   retriveEventsByVolunteer,
   volunteerStartWork,
   volunteerEndWork,
+  retriveAllEvents,
 };

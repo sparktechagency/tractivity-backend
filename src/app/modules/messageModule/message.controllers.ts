@@ -8,16 +8,16 @@ import { Request, Response } from 'express';
 import fileUploader from '../../../utils/fileUploader';
 import { FileArray } from 'express-fileupload';
 import Attachment from '../attachmentModule/attachment.model';
-// import SocketManager from '../../../socket/manager.socket';
 // import createNotification from '../../../utils/notificationCreator';
 import conversationService from '../conversationModule/conversation.service';
 import { Types } from 'mongoose';
 import eventServices from '../eventModule/event.services';
+import SocketManager from '../../socket/manager.socket';
 
 const createMessage = async (req: Request, res: Response) => {
   const messageData = req.body;
   const files = req.files;
-  // const socketManager = SocketManager.getInstance();
+  const socketManager = SocketManager.getInstance();
 
   // Validate and sanitize message data
   //   messageData.content = validator.escape(messageData.content);
@@ -59,7 +59,7 @@ const createMessage = async (req: Request, res: Response) => {
   }
 
   const message = await messageServices.createMessage(messageData);
-  // socketManager.sendMessage(messageData.conversation, message)
+  socketManager.sendMessage(messageData.conversation, message)
 
   // const getConversation = await conversationService.retriveConversationByConversationId(messageData.conversation)
   // // create notification for new message
@@ -70,6 +70,14 @@ const createMessage = async (req: Request, res: Response) => {
   if (!message) {
     throw new CustomError.BadRequestError('Failed to create message.');
   }
+
+  if(messageData.type === 'text'){
+    conversation.lastMessage = message._id as Types.ObjectId
+  }else{
+    conversation.lastMessage = "Sent you a attachment" as string
+  }
+
+  await conversation.save()
 
   if (messageData.type === 'attachment') {
     const attachmentPayload = {

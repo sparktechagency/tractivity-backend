@@ -6,6 +6,8 @@ import CustomError from '../../errors';
 import { populate } from 'dotenv';
 import eventServices from '../eventModule/event.services';
 import invitationServices from './invitation.services';
+import SocketManager from '../../socket/manager.socket';
+import { addUserToRoom } from '../roomMembershipModule/roomMembership.utils';
 
 // controller for retrive all invited missions of organizer
 const getOrganizerInvitedMissions = async (req: Request, res: Response) => {
@@ -81,6 +83,7 @@ const retriveInvitationsByVolunteer = async (req: Request, res: Response) => {
 // controller for join volunteer into event or accept event joining invitation
 const joinVolunteerToEvent = async (req: Request, res: Response) => {
   const { volunteerId, invitationId } = req.body;
+  const socketManager = SocketManager.getInstance();
 
   const invitation: any = await Invitation.findOne({ _id: invitationId }).populate({
     path: 'contentId',
@@ -103,11 +106,27 @@ const joinVolunteerToEvent = async (req: Request, res: Response) => {
     (volunteer: any) => volunteer.volunteer.toString() === volunteerId,
   );
   if (volunteerInInvitedVolunteerListInEvent) {
-    console.log(volunteerInInvitedVolunteerListInEvent);
+    // console.log(volunteerInInvitedVolunteerListInEvent);
     event.joinedVolunteer.push(volunteerInInvitedVolunteerListInEvent);
     event.invitedVolunteer = event.invitedVolunteer.filter((reqV: any) => reqV.volunteer.toString() !== volunteerId);
   }
   await event.save();
+
+  const volunteerInJoinedVolunteerListInEvent = event?.joinedVolunteer.find(
+    (volunteer: any) => volunteer.volunteer.toString() === volunteerId,
+  );
+
+  if (volunteerInJoinedVolunteerListInEvent) {
+    const eventId = (event._id as string).toString();
+    // Add user to Redis room membership
+    await addUserToRoom(volunteerId, eventId);
+
+    // Join user to the room in Socket.IO
+    socketManager.joinUserToARoom(eventId, volunteerId);
+  }
+
+  // invitation.status = 'accepted';
+  // await invitation.save();
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -132,7 +151,7 @@ const deleteEventInviation = async (req: Request, res: Response) => {
   }
 
   const event = await eventServices.retriveSpecificEventById(invitation.contentId as unknown as string);
-  console.log(invitation._id.toString())
+  console.log(invitation._id.toString());
   if (event) {
     event.invitedVolunteer = event.invitedVolunteer.filter((vol: any) => vol.volunteer.toString() !== invitation.consumerId.toString());
     await event.save();

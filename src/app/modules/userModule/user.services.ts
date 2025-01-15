@@ -12,9 +12,17 @@ const getSpecificUser = async (id: string): Promise<IUser> => {
   return await User.findOne({ _id: id }).select('-password');
 };
 
-// service for get specific user
-const getAllUser = async (): Promise<IUser[]> => {
-  return await User.find().select('-password');
+// service for get all user
+const getAllUser = async (searchQuery: string, role: string, skip: number, limit: number): Promise<IUser[]> => {
+  const query: any = {};
+  if (searchQuery) {
+    query.$text = { $search: searchQuery };
+  }
+  if (role) {
+    query.roles = {$in: [role]};
+  }
+
+  return await User.find(query).sort('-createdAt').skip(skip).limit(limit).select('-password -verification');
 };
 
 // service for get specific user
@@ -35,11 +43,16 @@ const deleteSpecificUser = async (id: string) => {
 };
 
 // service for search volunteers
-const searchVolunteers = async(query: string) => {
+const searchVolunteers = async (query: string) => {
   return await User.find({
-    $text: {$search: query},
-    roles: {$in: ['volunteer']}
-  }).select('image fullName profession')
+    $text: { $search: query },
+    roles: { $in: ['volunteer'] },
+  }).select('image fullName profession');
+};
+
+// service for get recent user
+const getRecentUsers = async () => {
+  return await User.find().sort('-createdAt').limit(6).select('-password -verification')
 }
 
 export default {
@@ -49,5 +62,6 @@ export default {
   updateSpecificUser,
   deleteSpecificUser,
   getAllUser,
-  searchVolunteers
+  searchVolunteers,
+  getRecentUsers,
 };

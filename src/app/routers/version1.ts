@@ -16,6 +16,7 @@ import friendshipRouter from '../modules/friendshipModule/friendship.routes';
 import conversationRouter from '../modules/conversationModule/conversations.routes';
 import messageRouter from '../modules/messageModule/message.routes';
 import attachmentRouter from '../modules/attachmentModule/attachment.routes';
+import dashboardRouter from '../modules/dashboardMatrix/dashboardMatrix.routes';
 
 const routersVersionOne = express.Router();
 
@@ -36,5 +37,6 @@ routersVersionOne.use('/message', messageRouter)
 routersVersionOne.use('/attachment', attachmentRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
+routersVersionOne.use('/dashboard', dashboardRouter);
 
 export default routersVersionOne;

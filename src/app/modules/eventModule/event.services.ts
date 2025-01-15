@@ -29,8 +29,8 @@ const retriveSpecificEventById = async (id: string) => {
       {
         path: 'connectedOrganizers',
         select: 'image fullName',
-      }
-    ]
+      },
+    ],
   });
 };
 
@@ -46,9 +46,8 @@ const updateSpecificEventById = async (id: string, data: Partial<IEvent>) => {
 
 // service for search events
 const searchEvents = async (searchQuery: string) => {
-
   // Execute the query
-  return await Event.find({$text: {$search: searchQuery}}).populate({
+  return await Event.find({ $text: { $search: searchQuery } }).populate({
     path: 'missionId',
     select: 'connectedOrganizations connectedOrganizers',
     populate: [
@@ -65,12 +64,7 @@ const searchEvents = async (searchQuery: string) => {
 };
 
 // service for search events
-const retriveEventsByVolunteer = async (
-  volunteerId: string,
-  searchQuery: string,
-  status: string,
-  date: string
-) => {
+const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string, status: string, date: string) => {
   type Query = {
     joinedVolunteer?: { $elemMatch: { volunteer: string } };
     $text?: { $search: string };
@@ -129,6 +123,23 @@ const retriveAllEventsByMissionId = async (id: string) => {
   return await Event.find({ missionId: id }).select('-invitedVolunteer -joinedVolunteer ');
 };
 
+// service for retrive all events
+const retriveAllEvents = async (searchQuery: string, status: string, skip: number, limit: number) => {
+  const query: any = {};
+  if (searchQuery) {
+    query.$text = { $search: searchQuery };
+  }
+  if (status) {
+    query.status = status;
+  }
+  return await Event.find(query).sort('-createdAt').skip(skip).limit(limit);
+};
+
+// service for delete specific events
+const deleteSpecificEvent = async (id: string) => {
+  return await Event.deleteOne({ _id: id });
+}
+
 export default {
   createEvent,
   retriveEventsByOrganizer,
@@ -138,4 +149,6 @@ export default {
   searchEvents,
   retriveAllEventsByMissionId,
   retriveEventsByVolunteer,
+  retriveAllEvents,
+  deleteSpecificEvent
 };

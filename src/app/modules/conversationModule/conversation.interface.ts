@@ -10,6 +10,6 @@ export interface IConversation extends Document {
     receiverId: string;
   };
   type: string;
-  lastMessage: Types.ObjectId;
+  lastMessage: Types.ObjectId | string;
   memberCounts: number
 }

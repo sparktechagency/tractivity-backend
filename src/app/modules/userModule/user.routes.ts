@@ -6,7 +6,8 @@ import requestValidator from "../../middlewares/requestValidator";
 const userRouter = express.Router();
 
 userRouter.post('/create', requestValidator(UserValidationZodSchema.createUserZodSchema), userControllers.createUser)
-userRouter.get('/retrive/all', userControllers.getAllUser)
+userRouter.get('/retrive/search', userControllers.getAllUser)
+userRouter.get('/retrive/recent', userControllers.getRecentUsers)
 userRouter.get('/retrive/:id', requestValidator(UserValidationZodSchema.getSpecificUserZodSchema), userControllers.getSpecificUser)
 userRouter.patch('/update/:id', requestValidator(UserValidationZodSchema.getSpecificUserZodSchema), userControllers.updateSpecificUser)
 userRouter.delete('/delete/:id', requestValidator(UserValidationZodSchema.getSpecificUserZodSchema), userControllers.deleteSpecificUser)

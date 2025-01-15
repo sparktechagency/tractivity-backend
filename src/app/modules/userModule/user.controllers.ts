@@ -88,12 +88,26 @@ const getSpecificUser = async (req: Request, res: Response) => {
 };
 // service for get specific user by id
 const getAllUser = async (req: Request, res: Response) => {
-  const users = await userServices.getAllUser();
+  const { query, role } = req.query;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const users = await userServices.getAllUser(query as string, role as string, skip, limit);
+
+  const totalUsers = users.length || 0;
+  const totalPages = Math.ceil(totalUsers / limit);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'User retrive successfull',
+    meta: {
+      totalData: totalUsers,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
     data: users,
   });
 };
@@ -167,6 +181,18 @@ const changeUserProfileImage = async (req: Request, res: Response) => {
   });
 };
 
+// controller for get recent user
+const getRecentUsers = async (req: Request, res: Response) => {
+  const users = await userServices.getRecentUsers()
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Recent users retrive successfull.',
+    data: users
+  })
+}
+
 export default {
   createUser,
   getSpecificUser,
@@ -174,4 +200,5 @@ export default {
   deleteSpecificUser,
   updateSpecificUser,
   changeUserProfileImage,
+  getRecentUsers,
 };

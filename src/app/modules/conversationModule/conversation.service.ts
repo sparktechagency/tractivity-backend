@@ -16,6 +16,13 @@ const retriveConversationBySenderIdAndReceiverId = async (senderId: string, rece
   });
 };
 
+// service for retrive specific conversation by receiverId
+const retriveConversationByReceiverId = async (receiverId: string) => {
+  return await Conversation.findOne({
+    'receiver.receiverId': receiverId,
+  });
+};
+
 // service for retrive specific conversation by conversationId
 const retriveConversationByConversationId = async (conversationId: string) => {
   return await Conversation.findOne({ _id: conversationId });
@@ -42,6 +49,7 @@ const retriveConversationsBySpecificUser = async (userId: string) => {
 export default {
   createConversation,
   retriveConversationBySenderIdAndReceiverId,
+  retriveConversationByReceiverId,
   retriveConversationByConversationId,
   retriveConversationsBySpecificUser,
 };
