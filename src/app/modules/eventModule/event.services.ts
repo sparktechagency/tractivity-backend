@@ -138,6 +138,10 @@ const retriveAllEvents = async (searchQuery: string, status: string, skip: numbe
       select: 'fullName image'
     },
     {
+      path: 'creator.creatorId',
+      select: 'image'
+    },
+    {
       path: 'missionId',
       select: 'connectedOrganizations',
       populate: {
