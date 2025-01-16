@@ -132,7 +132,20 @@ const retriveAllEvents = async (searchQuery: string, status: string, skip: numbe
   if (status) {
     query.status = status;
   }
-  return await Event.find(query).sort('-createdAt').skip(skip).limit(limit);
+  return await Event.find(query).sort('-createdAt').skip(skip).limit(limit).populate([
+    {
+      path: 'joinedVolunteer.volunteer',
+      select: 'fullName image'
+    },
+    {
+      path: 'missionId',
+      select: 'connectedOrganizations',
+      populate: {
+        path: 'connectedOrganizations',
+        select: 'name',
+      }
+    }
+  ]);
 };
 
 // service for delete specific events

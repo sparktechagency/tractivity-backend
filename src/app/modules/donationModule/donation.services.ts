@@ -8,7 +8,10 @@ const createDonation = async (data: Partial<IDonation>) => {
 
 // service for get all donations
 const getAllDonations = async (skip: number, limit: number) => {
-  return await Donation.find().skip(skip).limit(limit)
+  return await Donation.find().skip(skip).limit(limit).populate({
+    path: 'doner.donerId',
+    select: 'image'
+  })
 };
 
 // service for get specific donation by id
