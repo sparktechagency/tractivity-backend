@@ -1,8 +1,11 @@
 import express from 'express';
 import invitationControllers from '../invitationModule/invitation.controllers';
 import eventControllers from '../eventModule/event.controllers';
+import authorization from '../../middlewares/authorization';
 
 const volunteerRouter = express.Router();
+
+volunteerRouter.use(authorization('super-admin', 'admin', 'user'))
 
 volunteerRouter.get('/join-invitation', invitationControllers.joinVolunteerToEvent)
 volunteerRouter.get('/notification/:volunteerId', invitationControllers.retriveInvitationsByVolunteer)

@@ -1,11 +1,12 @@
 import express from "express";
 import organizationControllers from "./organization.controllers";
+import authorization from '../../middlewares/authorization';
 
 const organizationRouter = express.Router();
 
-organizationRouter.post("/create", organizationControllers.createOrganization);
-organizationRouter.get("/retrive/all", organizationControllers.retriveOrganizations);
-organizationRouter.get("/retrive/creator/:creatorId", organizationControllers.retriveOrganizationsByCreatorId);
-organizationRouter.delete("/delete/:id", organizationControllers.deleteSpecificOrganization);
+organizationRouter.post("/create", authorization('user'), organizationControllers.createOrganization);
+organizationRouter.get("/retrive/all", authorization('super-admin', 'admin', 'user'), organizationControllers.retriveOrganizations);
+organizationRouter.get("/retrive/creator/:creatorId", authorization('super-admin', 'admin', 'user'), organizationControllers.retriveOrganizationsByCreatorId);
+organizationRouter.delete("/delete/:id", authorization('super-admin', 'admin', 'user'), organizationControllers.deleteSpecificOrganization);
 
 export default organizationRouter;

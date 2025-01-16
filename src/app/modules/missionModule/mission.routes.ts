@@ -1,14 +1,15 @@
 import express from "express";
 import missionControllers from "./mission.controllers";
+import authorization from '../../middlewares/authorization';
 
 const missionRouter = express.Router();
 
-missionRouter.post("/create", missionControllers.createMission);
-missionRouter.get("/retrive/:id", missionControllers.retriveSpecificMissionsById);
-missionRouter.get("/retrive/creator/:creatorId", missionControllers.retriveMissionsByCreatorId);
-missionRouter.delete("/delete/:id", missionControllers.deleteSpecificOMission);
-missionRouter.get("/organization/search", missionControllers.searchOrganization);
-missionRouter.get("/organizer/search", missionControllers.searchOrganizer);
-missionRouter.get("/retrive/organization/:organizationId", missionControllers.retriveMissionsByOrganization);
+missionRouter.post("/create", authorization('super-admin', 'admin', 'user'), missionControllers.createMission);
+missionRouter.get("/retrive/:id", authorization('super-admin', 'admin', 'user'), missionControllers.retriveSpecificMissionsById);
+missionRouter.get("/retrive/creator/:creatorId", authorization('super-admin', 'admin', 'user'), missionControllers.retriveMissionsByCreatorId);
+missionRouter.delete("/delete/:id", authorization('super-admin', 'admin', 'user'), missionControllers.deleteSpecificOMission);
+missionRouter.get("/organization/search", authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganization);
+missionRouter.get("/organizer/search", authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganizer);
+missionRouter.get("/retrive/organization/:organizationId", authorization('super-admin', 'admin', 'user'), missionControllers.retriveMissionsByOrganization);
 
 export default missionRouter;
