@@ -8,6 +8,7 @@ import eventServices from '../eventModule/event.services';
 import invitationServices from './invitation.services';
 import SocketManager from '../../socket/manager.socket';
 import { addUserToRoom } from '../roomMembershipModule/roomMembership.utils';
+import missionServices from '../missionModule/mission.services';
 
 // controller for retrive all invited missions of organizer
 const getOrganizerInvitedMissions = async (req: Request, res: Response) => {
@@ -45,6 +46,42 @@ const rejectInvitation = async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Invitation rejected successfull',
+  });
+};
+
+// controller for accept specific mission invitation
+const acceptInvitation = async (req: Request, res: Response) => {
+  const { invitationId } = req.params;
+
+  const invitation = await Invitation.findById(invitationId);
+  if (!invitation) {
+    throw new CustomError.BadRequestError('Invitation not found');
+  }
+
+  if (invitation.status !== 'invited') {
+    throw new CustomError.BadRequestError('Invitation is not invited');
+  }
+
+  const mission = await missionServices.getSpecificMissionsById(invitation.contentId as unknown as string);
+  if (!mission) {
+    throw new CustomError.BadRequestError('Mission not found');
+  }
+
+  const updatedInvitation = await Invitation.findByIdAndUpdate(invitationId, { status: 'accepted' }, { new: true });
+
+  if (updatedInvitation?.isModified) {
+    // move consumer from requestedOrganizers to connectedOrganizers
+    mission.requestedOrganizers = mission.requestedOrganizers.filter((org: any) => org._id.toString() !== invitation.consumerId.toString());
+    mission.connectedOrganizers.push(invitation.consumerId as unknown as string);
+    await mission.save();
+  } else {
+    throw new CustomError.BadRequestError('Failed to accept invitation!');
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Invitation accepted successfull',
   });
 };
 
@@ -96,15 +133,18 @@ const joinVolunteerToEvent = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('Invitation not found!');
   }
 
-  const event = await eventServices.retriveSpecificEventById(invitation.contentId);
+  const event = await eventServices.retriveSpecificEventByIdWithoutVolunteerPopulation(invitation.contentId);
   if (!event) {
     throw new CustomError.BadRequestError('Event not found!');
   }
+
+  // console.log(invitationId, volunteerId, event)
 
   // check volunteer exist in invitedVolunteer array in content
   const volunteerInInvitedVolunteerListInEvent = event?.invitedVolunteer.find(
     (volunteer: any) => volunteer.volunteer.toString() === volunteerId,
   );
+  // console.log('invited array', volunteerInInvitedVolunteerListInEvent)
   if (volunteerInInvitedVolunteerListInEvent) {
     // console.log(volunteerInInvitedVolunteerListInEvent);
     event.joinedVolunteer.push(volunteerInInvitedVolunteerListInEvent);
@@ -115,7 +155,7 @@ const joinVolunteerToEvent = async (req: Request, res: Response) => {
   const volunteerInJoinedVolunteerListInEvent = event?.joinedVolunteer.find(
     (volunteer: any) => volunteer.volunteer.toString() === volunteerId,
   );
-
+  // console.log('joined array', volunteerInJoinedVolunteerListInEvent)
   if (volunteerInJoinedVolunteerListInEvent) {
     const eventId = (event._id as string).toString();
     // Add user to Redis room membership
@@ -164,10 +204,47 @@ const deleteEventInviation = async (req: Request, res: Response) => {
   });
 };
 
+// controller for accept mission inviation.
+const acceptMissionInviationForVolunteer = async (req: Request, res: Response) => {
+  const { invitationId } = req.params;
+
+  const invitation = await invitationServices.retriveInvitationById(invitationId);
+  if (!invitation) {
+    throw new CustomError.BadRequestError('Invitation not found!');
+  }
+
+  if (invitation.status !== 'invited') {
+    throw new CustomError.BadRequestError('Invitation is not invited');
+  }
+
+  const mission = await missionServices.getSpecificMissionsById(invitation.contentId as unknown as string);
+  if (!mission) {
+    throw new CustomError.BadRequestError('Mission not found');
+  }
+
+  const updatedInvitation = await Invitation.findByIdAndUpdate(invitationId, { status: 'accepted' }, { new: true });
+  if (updatedInvitation?.isModified) {
+    // move consumer from requestedVolunteers to connectedVolunteers
+    mission.requestedVolunteers = mission.requestedVolunteers.filter((vol: any) => vol._id.toString() !== invitation.consumerId.toString());
+    mission.connectedVolunteers.push(invitation.consumerId as unknown as string);
+    await mission.save();
+  } else {
+    throw new CustomError.BadRequestError('Invitation is not invited');
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Mission Invitation accepted successfull',
+  });
+};
+
 export default {
   getOrganizerInvitedMissions,
   rejectInvitation,
+  acceptInvitation,
   retriveInvitationsByVolunteer,
   joinVolunteerToEvent,
   deleteEventInviation,
+  acceptMissionInviationForVolunteer,
 };

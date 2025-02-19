@@ -10,6 +10,7 @@ import { StatusCodes } from 'http-status-codes';
 import eventServices from './event.services';
 import dateChacker from '../../../utils/dateChacker';
 import invitationServices from '../invitationModule/invitation.services';
+import organizationService from '../organizationModule/organization.service';
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
@@ -30,7 +31,7 @@ const createNewEvent = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('You must invite at least one volunteer to the event!');
   }
 
-  const creator = await userServices.getSpecificUser(eventData.creatorId);
+  const creator: any = await userServices.getSpecificUser(eventData.creatorId);
   if (!creator) {
     throw new CustomError.BadRequestError('No creator found by the creatorId!');
   }
@@ -43,6 +44,16 @@ const createNewEvent = async (req: Request, res: Response) => {
   const mission = await missionServices.getSpecificMissionsById(eventData.missionId);
   if (!mission) {
     throw new CustomError.BadRequestError("Mission dosen't exist. You can't create event under the mission!");
+  }
+
+  // check the mission is active
+  if (mission.status !== 'active') {
+    throw new CustomError.BadRequestError('Mission is not active. You can not create event under the mission!');
+  }
+
+  // check the creator is member of mission.connectedOrganizers
+  if (!mission.connectedOrganizers.find((org: any) => org._id.toString() === creator._id.toString())) {
+    throw new CustomError.BadRequestError('Creator dose not have access to create event!');
   }
 
   if (files && files.images) {
@@ -59,7 +70,7 @@ const createNewEvent = async (req: Request, res: Response) => {
     if (Array.isArray(eventDocumentPaths)) {
       eventData.documents = eventDocumentPaths;
     } else {
-      eventData.images = [eventDocumentPaths];
+      eventData.documents = [eventDocumentPaths];
     }
   }
 
@@ -70,20 +81,16 @@ const createNewEvent = async (req: Request, res: Response) => {
     isActive: true,
   };
 
-  eventData.cords = {
-    lat: Number(eventData.latitude),
-    lng: Number(eventData.longitude),
-  };
-
   // move organizer from requestedOrganizer to connectedOrganizer list
-  const organizerFromRequestedOrganizerList = mission.requestedOrganizers.find((reqO) => reqO.toString() === eventData.creatorId);
-  if (organizerFromRequestedOrganizerList) {
-    mission.connectedOrganizers.push(organizerFromRequestedOrganizerList);
-    mission.requestedOrganizers = mission.requestedOrganizers.filter((reqO) => reqO.toString() !== eventData.creatorId);
-    await mission.save();
-  } else {
-    throw new CustomError.BadRequestError('The organizer is not invited of mission to creating event!');
-  }
+  // const organizerFromRequestedOrganizerList = mission.requestedOrganizers.find((reqO) => reqO.toString() === eventData.creatorId);
+  // const organizerFromConnectedOrganizerList = mission.connectedOrganizers.find((conO) => conO.toString() === eventData.creatorId);
+  // if (organizerFromRequestedOrganizerList || organizerFromConnectedOrganizerList) {
+  //   mission.connectedOrganizers.push(organizerFromRequestedOrganizerList as string);
+  //   mission.requestedOrganizers = mission.requestedOrganizers.filter((reqO) => reqO.toString() !== eventData.creatorId);
+  //   await mission.save();
+  // } else {
+  //   throw new CustomError.BadRequestError('The organizer is not invited of mission to creating event!');
+  // }
 
   const event = await eventServices.createEvent(eventData);
 
@@ -102,11 +109,11 @@ const createNewEvent = async (req: Request, res: Response) => {
     }),
   );
 
-  const invitation = await invitationServices.retriveInvitationByConsumerId(eventData.creatorId);
-  if (invitation) {
-    invitation.status = 'accepted';
-    await invitation.save();
-  }
+  // const invitation = await invitationServices.retriveInvitationByConsumerId(eventData.creatorId);
+  // if (invitation) {
+  //   invitation.status = 'accepted';
+  //   await invitation.save();
+  // }
 
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
@@ -118,9 +125,26 @@ const createNewEvent = async (req: Request, res: Response) => {
 
 // controller for search volunteers
 const searchVolunteers = async (req: Request, res: Response) => {
-  const { query } = req.query;
+  const { missionId } = req.params;
+  // const { query } = req.query;
 
-  const volunteers = await userServices.searchVolunteers(query as string);
+  const mission = await missionServices.getSpecificMissionsById(missionId);
+  if (!mission) {
+    throw new CustomError.BadRequestError('Invalid mission id!');
+  }
+
+  let volunteers: any = [];
+
+  await Promise.all(
+    mission.connectedOrganizations.map(async (org: any) => {
+      const organization = await organizationService.getSpecificOrganizationById(org);
+      if (organization) {
+        volunteers = [...volunteers, ...organization.connectedVolunteers];
+      }
+    }),
+  );
+
+  // const filteredVolunteers = await userServices.searchVolunteers(query as string);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -231,12 +255,25 @@ const retriveEventsByVolunteer = async (req: Request, res: Response) => {
 // retrive all events by missionId
 const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const events = await eventServices.retriveAllEventsByMissionId(id);
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const events = await eventServices.retriveAllEventsByMissionId(id, limit, skip);
+
+  const totalEvents = events.length || 0;
+  const totalPages = Math.ceil(totalEvents / limit);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Events retrive successfull',
+    meta: {
+      totalData: totalEvents,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
     data: events,
   });
 };

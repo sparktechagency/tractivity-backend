@@ -7,8 +7,8 @@ const createOrganization = async (data: Partial<IOrganization>) => {
 };
 
 // service for get all organization by creator
-const getAllOrganizationsByCreator = async (id: string) => {
-  return await Organization.find({ 'creator.creatorId': id });
+const getAllOrganizationsByCreator = async (id: string, skip: number, limit: number) => {
+  return await Organization.find({ 'creator.creatorId': id }).skip(skip).limit(limit);
 };
 
 // service for delete organization by id
@@ -17,13 +17,25 @@ const deleteOrganizationById = async (id: string) => {
 };
 
 // service for retrive all organizations
-const retriveAllOrganizations = async () => {
-  return await Organization.find();
+const retriveAllOrganizations = async (skip: number, limit: number) => {
+  return await Organization.find().skip(skip).limit(limit);
+}
+
+// service for update organization by id
+const updateOrganizationById = async (id: string, data: Partial<IOrganization>) => {
+  return await Organization.updateOne({ _id: id }, data, { runValidators: true });
+}
+
+// service for get specific organization by id
+const getSpecificOrganizationById = async (id: string) => {
+  return await Organization.findOne({ _id: id });
 }
 
 export default {
   createOrganization,
   getAllOrganizationsByCreator,
   deleteOrganizationById,
-  retriveAllOrganizations
+  retriveAllOrganizations,
+  updateOrganizationById,
+  getSpecificOrganizationById
 };

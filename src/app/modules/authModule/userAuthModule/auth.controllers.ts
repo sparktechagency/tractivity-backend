@@ -36,6 +36,7 @@ const userLogin = async (req: Request, res: Response) => {
   const payload = {
     email: user.email,
     roles: user.roles,
+    role: 'user'
   };
 
   const accessToken = jwtHelpers.createToken(

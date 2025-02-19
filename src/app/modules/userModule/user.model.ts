@@ -84,6 +84,11 @@ const userSchema = new mongoose.Schema<IUser>(
     topDistance: {
       type: String,
       default: null,
+    },
+    role: {
+      type: String,
+      enum: ['user'],
+      default: 'user',
     }
   },
   {

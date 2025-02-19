@@ -12,15 +12,20 @@ export interface IEvent extends Document {
   description: string;
   images: string[];
   documents: string[];
-  cords: {
-    lat: number;
-    lng: number;
+  address: {
+    street: string;
+    city: string;
+    country: string;
   };
   startTime: string;
   endTime: string;
   date: Date;
   mode: string;
   status: string;
+  report: {
+    hours: number;
+    mileage: number;
+  };
   invitedVolunteer: {
     volunteer: Types.ObjectId;
     workTitle: string;
@@ -30,6 +35,7 @@ export interface IEvent extends Document {
       startDate: Date;
     };
     totalHours: number;
+    mileage: number;
   }[];
   joinedVolunteer: {
     volunteer: Types.ObjectId;
@@ -40,5 +46,6 @@ export interface IEvent extends Document {
       startDate: Date;
     };
     totalHours: number;
+    mileage: number;
   }[];
 }

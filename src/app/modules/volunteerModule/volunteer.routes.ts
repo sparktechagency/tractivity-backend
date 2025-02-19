@@ -7,7 +7,7 @@ const volunteerRouter = express.Router();
 
 volunteerRouter.use(authorization('super-admin', 'admin', 'user'))
 
-volunteerRouter.get('/join-invitation', invitationControllers.joinVolunteerToEvent)
+volunteerRouter.patch('/join-invitation', invitationControllers.joinVolunteerToEvent)
 volunteerRouter.get('/notification/:volunteerId', invitationControllers.retriveInvitationsByVolunteer)
 volunteerRouter.get('/retrive/in-event', eventControllers.retriveSpecificVolunteerInEvent)
 volunteerRouter.get('/event/search', eventControllers.searchEvents)
@@ -16,5 +16,7 @@ volunteerRouter.get('/event/retrive/mission/:id', eventControllers.retriveAllEve
 volunteerRouter.delete('/event/invitation/reject/:invitationId', invitationControllers.deleteEventInviation);
 volunteerRouter.patch('/event/start-work', eventControllers.volunteerStartWork)
 volunteerRouter.patch('/event/end-work', eventControllers.volunteerEndWork)
+
+volunteerRouter.patch('/mission/invitation/accept/:invitationId', invitationControllers.acceptMissionInviationForVolunteer)
 
 export default volunteerRouter;

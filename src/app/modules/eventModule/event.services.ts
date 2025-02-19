@@ -18,6 +18,34 @@ const retriveEventsByOrganizer = async (id: string, status: string) => {
 
 // service for retrive specific event by organizer/creator
 const retriveSpecificEventById = async (id: string) => {
+  return await Event.findOne({ _id: id }).populate([
+    {
+      path: 'missionId',
+      select: 'name connectedOrganizer connectedOrganizations',
+      populate: [
+        {
+          path: 'connectedOrganizations',
+          select: 'name',
+        },
+        {
+          path: 'connectedOrganizers',
+          select: 'image fullName',
+        },
+      ],
+    },
+    {
+      path: 'invitedVolunteer.volunteer',
+      select: 'fullName image profession',
+    },
+    {
+      path: 'joinedVolunteer.volunteer',
+      select: 'fullName image profession',
+    },
+  ]);
+};
+
+// service for retrive specific event by organizer/creator without volunteer population
+const retriveSpecificEventByIdWithoutVolunteerPopulation = async (id: string) => {
   return await Event.findOne({ _id: id }).populate({
     path: 'missionId',
     select: 'name connectedOrganizer connectedOrganizations',
@@ -119,8 +147,27 @@ const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string
 };
 
 // service retrive all events by missionId
-const retriveAllEventsByMissionId = async (id: string) => {
-  return await Event.find({ missionId: id }).select('-invitedVolunteer -joinedVolunteer ');
+const retriveAllEventsByMissionId = async (id: string, limit: number, skip: number) => {
+  return await Event.find({ missionId: id })
+    .skip(skip)
+    .limit(limit)
+    .select('-invitedVolunteer -joinedVolunteer._id -joinedVolunteer.workStatus -joinedVolunteer.startInfo')
+    .populate([
+      {
+        path: 'missionId',
+        select: 'name',
+        populate: [
+          {
+            path: 'connectedOrganizations',
+            select: 'name',
+          },
+        ],
+      },
+      {
+        path: 'joinedVolunteer.volunteer',
+        select: 'fullName image',
+      },
+    ]);
 };
 
 // service for retrive all events
@@ -132,40 +179,45 @@ const retriveAllEvents = async (searchQuery: string, status: string, skip: numbe
   if (status) {
     query.status = status;
   }
-  return await Event.find(query).sort('-createdAt').skip(skip).limit(limit).populate([
-    {
-      path: 'joinedVolunteer.volunteer',
-      select: 'fullName image'
-    },
-    {
-      path: 'creator.creatorId',
-      select: 'image'
-    },
-    {
-      path: 'missionId',
-      select: 'connectedOrganizations',
-      populate: {
-        path: 'connectedOrganizations',
-        select: 'name',
-      }
-    }
-  ]);
+  return await Event.find(query)
+    .sort('-createdAt')
+    .skip(skip)
+    .limit(limit)
+    .populate([
+      {
+        path: 'joinedVolunteer.volunteer',
+        select: 'fullName image',
+      },
+      {
+        path: 'creator.creatorId',
+        select: 'image',
+      },
+      {
+        path: 'missionId',
+        select: 'connectedOrganizations',
+        populate: {
+          path: 'connectedOrganizations',
+          select: 'name',
+        },
+      },
+    ]);
 };
 
 // service for delete specific events
 const deleteSpecificEvent = async (id: string) => {
   return await Event.deleteOne({ _id: id });
-}
+};
 
 export default {
   createEvent,
   retriveEventsByOrganizer,
   retriveSpecificEventById,
+  retriveSpecificEventByIdWithoutVolunteerPopulation,
   deleteSpecificEventById,
   updateSpecificEventById,
   searchEvents,
   retriveAllEventsByMissionId,
   retriveEventsByVolunteer,
   retriveAllEvents,
-  deleteSpecificEvent
+  deleteSpecificEvent,
 };

@@ -23,6 +23,7 @@ interface IUser extends Document {
   fcmToken?: string;
   totalVolunteeHours?: string;
   topDistance?: string;
+  role?: string;
 
   // method declarations
   comparePassword(userPlanePassword: string): boolean

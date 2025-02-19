@@ -8,6 +8,9 @@ missionRouter.post("/create", authorization('super-admin', 'admin', 'user'), mis
 missionRouter.get("/retrive/:id", authorization('super-admin', 'admin', 'user'), missionControllers.retriveSpecificMissionsById);
 missionRouter.get("/retrive/creator/:creatorId", authorization('super-admin', 'admin', 'user'), missionControllers.retriveMissionsByCreatorId);
 missionRouter.delete("/delete/:id", authorization('super-admin', 'admin', 'user'), missionControllers.deleteSpecificOMission);
+
+missionRouter.patch("/update/:id", authorization('super-admin', 'admin', 'user'), missionControllers.updateSpecificMission);
+
 missionRouter.get("/organization/search", authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganization);
 missionRouter.get("/organizer/search", authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganizer);
 missionRouter.get("/retrive/organization/:organizationId", authorization('super-admin', 'admin', 'user'), missionControllers.retriveMissionsByOrganization);

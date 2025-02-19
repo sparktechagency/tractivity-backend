@@ -23,9 +23,10 @@ const eventSchema = new mongoose.Schema<IEvent>(
     description: String,
     images: [String],
     documents: [String],
-    cords: {
-      lat: Number,
-      lng: Number,
+    address: {
+      street: String,
+      city: String,
+      country: String,
     },
     startTime: String,
     endTime: String,
@@ -33,8 +34,8 @@ const eventSchema = new mongoose.Schema<IEvent>(
     mode: {
       type: String,
       enum: {
-        values: ['public', 'private', 'organization'],
-        message: '{VALUE} is not accepted. Please use public/private/organization',
+        values: ['public', 'private'],
+        message: '{VALUE} is not accepted. Please use public/private',
       },
     },
     status: {
@@ -44,6 +45,16 @@ const eventSchema = new mongoose.Schema<IEvent>(
         message: '{VALUE} is not accepted. Please use running or deliveried',
       },
       default: 'running',
+    },
+    report: {
+      hours: {
+        type: Number,
+        default: 0,
+      },
+      mileage: {
+        type: Number,
+        default: 0,
+      },
     },
     invitedVolunteer: [
       {
@@ -71,6 +82,10 @@ const eventSchema = new mongoose.Schema<IEvent>(
           startDate: Date,
         },
         totalWorkedHour: {
+          type: Number,
+          default: 0,
+        },
+        mileage: {
           type: Number,
           default: 0,
         },
@@ -102,6 +117,10 @@ const eventSchema = new mongoose.Schema<IEvent>(
           startDate: Date,
         },
         totalWorkedHour: {
+          type: Number,
+          default: 0,
+        },
+        mileage: {
           type: Number,
           default: 0,
         },

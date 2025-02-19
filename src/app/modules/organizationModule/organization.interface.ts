@@ -9,6 +9,11 @@ interface IOrganization extends Document{
     },
     name: string;
     description: string;
+    connectedVolunteers: [Types.ObjectId];
+    report: {
+      hours: number,
+      mileage: number
+    }
 }
 
 export default IOrganization;

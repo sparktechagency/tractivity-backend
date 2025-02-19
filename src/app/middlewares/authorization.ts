@@ -16,7 +16,7 @@ const authentication = (...requiredRoles: string[]) => {
     const userPayload = jwtHelpers.verifyToken(token, config.jwt_access_token_secret as Secret);
 
     req.user = userPayload;
-
+    
     // Guard for check authentication
     if (requiredRoles.length && !requiredRoles.includes(userPayload.role)) {
       throw new CustomError.ForbiddenError('Forbidden!');

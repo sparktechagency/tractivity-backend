@@ -23,18 +23,62 @@ const missionSchema = new mongoose.Schema<IMission>(
       type: String,
       required: true,
     },
-    connectedOrganizations: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'organization',
-    }],
-    requestedOrganizers: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'user',
-    }],
-    connectedOrganizers: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'user',
-    }],
+    connectedOrganizations: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'organization',
+      },
+    ],
+    requestedOrganizers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      },
+    ],
+    connectedOrganizers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      },
+    ],
+    requestedVolunteers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      }
+    ],
+    connectedVolunteers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      }
+    ],
+    mode: {
+      type: String,
+      enum: {
+        values: ['public', 'private'],
+        message: '{VALUE} is not accepted as a mode. Please use public/private.'
+      },
+      required: true,
+    },
+    report: {
+      hours: {
+        type: Number,
+        default: 0,
+      },
+      mileage: {
+        type: Number,
+        default: 0,
+      },
+    },
+    status: {
+      type: String,
+      enum: {
+        values: ['active', 'inactive'],
+        message: '{VALUE} is not accepted as a status. Please use active/inactive.'
+      },
+      default: 'active', 
+    }
   },
   {
     timestamps: true,

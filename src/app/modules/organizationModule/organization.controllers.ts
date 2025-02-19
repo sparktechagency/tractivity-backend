@@ -42,15 +42,28 @@ const createOrganization = async (req: Request, res: Response) => {
 // controller for retrive organizations by creatorId
 const retriveOrganizationsByCreatorId = async (req: Request, res: Response) => {
   const { creatorId } = req.params;
-  const organizations = await organizationService.getAllOrganizationsByCreator(creatorId);
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const organizations = await organizationService.getAllOrganizationsByCreator(creatorId, skip, limit);
   //   if (!organizations) {
   //     throw new CustomError.NotFoundError('No organizations found for the creator!');
   //   }
+
+  const totalOrganizations = organizations.length || 0;
+  const totalPages = Math.ceil(totalOrganizations / limit);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Organization retrive successfull',
+    meta: {
+      totalData: totalOrganizations,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
     data: organizations,
   });
 };
@@ -72,13 +85,41 @@ const deleteSpecificOrganization = async (req: Request, res: Response) => {
 
 // controller for retrive all organization
 const retriveOrganizations = async (req: Request, res: Response) => {
-  const organizations = await organizationService.retriveAllOrganizations();
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const organizations = await organizationService.retriveAllOrganizations(skip, limit);
+
+  const totalOrganizations = organizations.length || 0;
+  const totalPages = Math.ceil(totalOrganizations / limit);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Organizations retrive successfull',
+    meta: {
+      totalData: totalOrganizations,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
     data: organizations,
+  });
+};
+
+// controller for update specific organization
+const updateSpecificOrganization = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const organization = await organizationService.updateOrganizationById(id, req.body);
+  if (!organization.modifiedCount) {
+    throw new CustomError.BadRequestError('Failed to update organization!');
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Organization update successfull',
   });
 };
 
@@ -87,4 +128,5 @@ export default {
   retriveOrganizationsByCreatorId,
   deleteSpecificOrganization,
   retriveOrganizations,
+  updateSpecificOrganization
 };

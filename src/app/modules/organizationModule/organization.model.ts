@@ -23,6 +23,22 @@ const organizationSchema = new mongoose.Schema<IOrganization>(
       type: String,
       required: true,
     },
+    connectedVolunteers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+      },
+    ],
+    report: {
+      hours: {
+        type: Number,
+        default: 0,
+      },
+      mileage: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,
@@ -31,8 +47,8 @@ const organizationSchema = new mongoose.Schema<IOrganization>(
 
 organizationSchema.index({
   name: 'text',
-  description: 'text'
-})
+  description: 'text',
+});
 
 const Organization = mongoose.model<IOrganization>('organization', organizationSchema);
 export default Organization;
