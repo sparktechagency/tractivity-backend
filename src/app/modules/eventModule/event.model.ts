@@ -28,6 +28,10 @@ const eventSchema = new mongoose.Schema<IEvent>(
       city: String,
       country: String,
     },
+    cords: {
+      lat: Number,
+      lng: Number,
+    },
     startTime: String,
     endTime: String,
     date: Date,

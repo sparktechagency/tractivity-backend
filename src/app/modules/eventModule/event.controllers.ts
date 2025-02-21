@@ -11,6 +11,8 @@ import eventServices from './event.services';
 import dateChacker from '../../../utils/dateChacker';
 import invitationServices from '../invitationModule/invitation.services';
 import organizationService from '../organizationModule/organization.service';
+import { calculateDistance } from '../../../utils/calculateDistance';
+import User from '../userModule/user.model';
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
@@ -108,6 +110,11 @@ const createNewEvent = async (req: Request, res: Response) => {
       await Invitation.create(invitationPayload);
     }),
   );
+
+  eventData.cords = {
+    lat: Number(eventData.latitude),
+    lng: Number(eventData.longitude),
+  };
 
   // const invitation = await invitationServices.retriveInvitationByConsumerId(eventData.creatorId);
   // if (invitation) {
@@ -297,7 +304,7 @@ const retriveSpecificEventsById = async (req: Request, res: Response) => {
 // controller for volunteer start work
 const volunteerStartWork = async (req: Request, res: Response) => {
   const { eventId, volunteerId } = req.body;
-  const event = await eventServices.retriveSpecificEventById(eventId);
+  const event = await eventServices.retriveSpecificEventByIdWithoutVolunteerPopulation(eventId);
   if (!event) {
     throw new CustomError.BadRequestError('Event not found!');
   }
@@ -330,11 +337,55 @@ const volunteerStartWork = async (req: Request, res: Response) => {
 };
 
 // controller for volunteer end work
+// const volunteerEndWork = async (req: Request, res: Response) => {
+//   const { eventId, volunteerId } = req.body;
+//   const event = await eventServices.retriveSpecificEventById(eventId);
+//   if (!event) {
+//     throw new CustomError.BadRequestError('Event not found!');
+//   }
+
+//   let volunteerInEvent = event.joinedVolunteer.find((v: any) => v.volunteer.toString() === volunteerId);
+//   if (!volunteerInEvent) {
+//     throw new CustomError.BadRequestError('No volunteer found in the event!');
+//   }
+
+//   if (volunteerInEvent.workStatus !== 'running') {
+//     throw new CustomError.BadRequestError('Work has not currently running to end!');
+//   }
+
+//   if (!volunteerInEvent.startInfo.isStart) {
+//     throw new CustomError.BadRequestError('Volunteer has not started work yet!');
+//   }
+
+//   // calculate hours and mileage for the volunteer and calculate for event and update mission and update organization for hours and mileage
+
+//   const endDate = new Date();
+//   const volunteerHours = (endDate.getTime() - volunteerInEvent.startInfo.startDate.getTime()) / 3600000;
+//   const volunteerMileage = volunteerInEvent.mileage + (volunteerInEvent.mileage * volunteerHours);
+
+//   volunteerInEvent.startInfo.isStart = false;
+//   volunteerInEvent.totalHours += (endDate.getTime() - volunteerInEvent.startInfo.startDate.getTime()) / 3600000;
+//   volunteerInEvent.workStatus = 'complete';
+
+//   await event.save();
+
+//   sendResponse(res, {
+//     statusCode: StatusCodes.OK,
+//     status: 'success',
+//     message: 'Volunteer end work successfull',
+//     data: volunteerInEvent,
+//   });
+// };
 const volunteerEndWork = async (req: Request, res: Response) => {
   const { eventId, volunteerId } = req.body;
-  const event = await eventServices.retriveSpecificEventById(eventId);
+  const event = await eventServices.retriveSpecificEventByIdWithoutVolunteerPopulation(eventId);
   if (!event) {
     throw new CustomError.BadRequestError('Event not found!');
+  }
+
+  const mission = await missionServices.getSpecificMissionsById(event.missionId as unknown as string);
+  if (!mission) {
+    throw new CustomError.BadRequestError('Event mission not found!');
   }
 
   let volunteerInEvent = event.joinedVolunteer.find((v: any) => v.volunteer.toString() === volunteerId);
@@ -343,24 +394,63 @@ const volunteerEndWork = async (req: Request, res: Response) => {
   }
 
   if (volunteerInEvent.workStatus !== 'running') {
-    throw new CustomError.BadRequestError('Work has not currently running to end!');
+    throw new CustomError.BadRequestError('Work is not currently running!');
   }
 
   if (!volunteerInEvent.startInfo.isStart) {
     throw new CustomError.BadRequestError('Volunteer has not started work yet!');
   }
 
+  // Get volunteer's home coordinates
+  const volunteer = await User.findById(volunteerId);
+  if (!volunteer || !volunteer.cords || !volunteer.cords.lat || !volunteer.cords.lng) {
+    throw new CustomError.BadRequestError('Volunteer location not found!');
+  }
+
+  // Get event coordinates
+  if (!event.cords || !event.cords.lat || !event.cords.lng) {
+    throw new CustomError.BadRequestError('Event location not found!');
+  }
+
+  // Calculate total worked hours
   const endDate = new Date();
+  const volunteerHours = (endDate.getTime() - volunteerInEvent.startInfo.startDate.getTime()) / 3600000;
+
+  // Calculate mileage
+  const distance = calculateDistance(volunteer.cords.lat, volunteer.cords.lng, event.cords.lat, event.cords.lng);
+
   volunteerInEvent.startInfo.isStart = false;
-  volunteerInEvent.totalHours += (endDate.getTime() - volunteerInEvent.startInfo.startDate.getTime()) / 3600000;
+  volunteerInEvent.totalWorkedHour += volunteerHours;
+  volunteerInEvent.mileage += distance * 2; // Round trip
   volunteerInEvent.workStatus = 'complete';
 
+  // add this volunteer hours and mileage to event
+  event.report.hours += volunteerHours;
+  event.report.mileage += distance * 2; // Round trip
+
   await event.save();
+
+  // update mission report
+  mission.report.hours += volunteerHours;
+  mission.report.mileage += distance * 2; // Round trip
+
+  await mission.save();
+
+  await Promise.all(
+    mission.connectedOrganizations.map(async (org: any) => {
+      const organization = await organizationService.getSpecificOrganizationById(org);
+      if (organization) {
+        organization.report.hours += volunteerHours;
+        organization.report.mileage += distance * 2; // Round trip
+        await organization.save();
+      }
+    }),
+  );
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
-    message: 'Volunteer end work successfull',
+    message: 'Volunteer work ended successfully',
     data: volunteerInEvent,
   });
 };

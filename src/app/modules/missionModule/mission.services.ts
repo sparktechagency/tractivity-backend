@@ -55,15 +55,28 @@ const getAllMissionsByOrganization = async (organizationId: string) => {
   // Query missions where the organization is connected
   const missions = await Mission.find({
     connectedOrganizations: { $in: [organizationId] },
-  })
-    .populate({
+  }).populate([
+    {
       path: 'connectedOrganizations',
-      select: 'name creator',
-    })
-    .populate({
+      select: 'name description',
+    },
+    {
       path: 'connectedOrganizers',
       select: 'fullName email',
-    });
+    },
+    {
+      path: 'requestedOrganizers',
+      select: 'image fullName profession',
+    },
+    {
+      path: 'connectedVolunteers',
+      select: 'image fullName profession',
+    },
+    {
+      path: 'requestedVolunteers',
+      select: 'image fullName profession',
+    },
+  ]);
 
   return missions;
 };

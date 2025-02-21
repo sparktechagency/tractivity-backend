@@ -123,10 +123,37 @@ const updateSpecificOrganization = async (req: Request, res: Response) => {
   });
 };
 
+// controller for retrive all organizations by connected volunteer
+const retriveAllOrganizationsByConnectedVolunteer = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const organizations = await organizationService.getAllOrganizationsByConnectedVolunteer(id, skip, limit);
+
+  const totalOrganizations = organizations.length || 0;
+  const totalPages = Math.ceil(totalOrganizations / limit);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Organizations retrive successfull',
+    meta: {
+      totalData: totalOrganizations,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
+    data: organizations,
+  });
+};
+
 export default {
   createOrganization,
   retriveOrganizationsByCreatorId,
   deleteSpecificOrganization,
   retriveOrganizations,
-  updateSpecificOrganization
+  updateSpecificOrganization,
+  retriveAllOrganizationsByConnectedVolunteer,
 };

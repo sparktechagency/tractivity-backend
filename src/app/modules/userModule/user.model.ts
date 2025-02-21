@@ -68,7 +68,6 @@ const userSchema = new mongoose.Schema<IUser>(
       lng: Number,
     },
     address: String,
-      
     isSocial: {
       type: Boolean,
       default: false,

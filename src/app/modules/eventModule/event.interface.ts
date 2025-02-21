@@ -26,6 +26,10 @@ export interface IEvent extends Document {
     hours: number;
     mileage: number;
   };
+  cords: {
+    lat: number;
+    lng: number;
+  };
   invitedVolunteer: {
     volunteer: Types.ObjectId;
     workTitle: string;
@@ -34,7 +38,7 @@ export interface IEvent extends Document {
       isStart: boolean;
       startDate: Date;
     };
-    totalHours: number;
+    totalWorkedHour: number;
     mileage: number;
   }[];
   joinedVolunteer: {
@@ -45,7 +49,7 @@ export interface IEvent extends Document {
       isStart: boolean;
       startDate: Date;
     };
-    totalHours: number;
+    totalWorkedHour: number;
     mileage: number;
   }[];
 }

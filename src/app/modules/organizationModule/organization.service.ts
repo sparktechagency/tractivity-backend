@@ -31,11 +31,17 @@ const getSpecificOrganizationById = async (id: string) => {
   return await Organization.findOne({ _id: id });
 }
 
+// service for retrive all organizations by specific connected volunteer
+const getAllOrganizationsByConnectedVolunteer = async (id: string, skip: number, limit: number) => {
+  return await Organization.find({ 'connectedVolunteers.volunteerId': id }).skip(skip).limit(limit);
+}
+
 export default {
   createOrganization,
   getAllOrganizationsByCreator,
   deleteOrganizationById,
   retriveAllOrganizations,
   updateOrganizationById,
-  getSpecificOrganizationById
+  getSpecificOrganizationById,
+  getAllOrganizationsByConnectedVolunteer
 };
