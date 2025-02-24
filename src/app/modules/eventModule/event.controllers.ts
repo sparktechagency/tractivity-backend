@@ -103,7 +103,7 @@ const createNewEvent = async (req: Request, res: Response) => {
     state: eventData.state,
     city: eventData.city,
     zip: eventData.zip,
-  }
+  };
 
   const event = await eventServices.createEvent(eventData);
 
