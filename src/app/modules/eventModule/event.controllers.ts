@@ -94,6 +94,17 @@ const createNewEvent = async (req: Request, res: Response) => {
   //   throw new CustomError.BadRequestError('The organizer is not invited of mission to creating event!');
   // }
 
+  eventData.cords = {
+    lat: Number(eventData.latitude),
+    lng: Number(eventData.longitude),
+  };
+
+  eventData.address = {
+    state: eventData.state,
+    city: eventData.city,
+    zip: eventData.zip,
+  }
+
   const event = await eventServices.createEvent(eventData);
 
   //   // create new invitation
@@ -110,11 +121,6 @@ const createNewEvent = async (req: Request, res: Response) => {
       await Invitation.create(invitationPayload);
     }),
   );
-
-  eventData.cords = {
-    lat: Number(eventData.latitude),
-    lng: Number(eventData.longitude),
-  };
 
   // const invitation = await invitationServices.retriveInvitationByConsumerId(eventData.creatorId);
   // if (invitation) {

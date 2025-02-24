@@ -32,7 +32,7 @@ const createMessage = async (req: Request, res: Response) => {
       throw new CustomError.BadRequestError('You are not authorized to send a message in this conversation!');
     }
   } else {
-    const event = await eventServices.retriveSpecificEventById(conversation.receiver.receiverId);
+    const event = await eventServices.retriveSpecificEventByIdWithoutVolunteerPopulation(conversation.receiver.receiverId);
 
     if (!event) {
       throw new CustomError.BadRequestError('Event not found. You cannot send a message to this group conversation.');
@@ -45,7 +45,7 @@ const createMessage = async (req: Request, res: Response) => {
     }
   }
 
-  if(files && messageData.type !== 'attachment'){
+  if (files && messageData.type !== 'attachment') {
     throw new CustomError.BadRequestError('Please use attachment as message type!');
   }
 
@@ -59,7 +59,7 @@ const createMessage = async (req: Request, res: Response) => {
   }
 
   const message = await messageServices.createMessage(messageData);
-  socketManager.sendMessage(messageData.conversation, message)
+  socketManager.sendMessage(messageData.conversation, message);
 
   // const getConversation = await conversationService.retriveConversationByConversationId(messageData.conversation)
   // // create notification for new message
@@ -71,13 +71,13 @@ const createMessage = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('Failed to create message.');
   }
 
-  if(messageData.type === 'text'){
-    conversation.lastMessage = message._id as Types.ObjectId
-  }else{
-    conversation.lastMessage = "Sent you a attachment" as string
+  if (messageData.type === 'text') {
+    conversation.lastMessage = message._id as Types.ObjectId;
+  } else {
+    conversation.lastMessage = 'Sent you a attachment' as string;
   }
 
-  await conversation.save()
+  await conversation.save();
 
   if (messageData.type === 'attachment') {
     const attachmentPayload = {

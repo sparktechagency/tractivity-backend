@@ -13,9 +13,9 @@ export interface IEvent extends Document {
   images: string[];
   documents: string[];
   address: {
-    street: string;
+    state: string;
     city: string;
-    country: string;
+    zip: string;
   };
   startTime: string;
   endTime: string;

@@ -24,9 +24,9 @@ const eventSchema = new mongoose.Schema<IEvent>(
     images: [String],
     documents: [String],
     address: {
-      street: String,
+      state: String,
       city: String,
-      country: String,
+      zip: String,
     },
     cords: {
       lat: Number,
