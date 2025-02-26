@@ -341,6 +341,32 @@ const retrieveVolunteersForInvitation = async (req: Request, res: Response) => {
   });
 };
 
+// controller for remove organizer from mission connectedOrganizations array or requestedOrganizers array
+const removeOrganizerFromMission = async (req: Request, res: Response) => {
+  const { missionId } = req.params;
+  const { organizerId } = req.body;
+
+  const mission = await missionServices.getSpecificMissionsById(missionId);
+  if (!mission) {
+    throw new CustomError.NotFoundError('Invalid mission id!');
+  }
+
+  if (mission.connectedOrganizers.find((org: any) => org._id.toString() === organizerId)) {
+    mission.connectedOrganizers = mission.connectedOrganizers.filter((org: any) => org._id.toString() !== organizerId);
+  }
+
+  if (mission.requestedOrganizers.find((org: any) => org._id.toString() === organizerId)) {
+    mission.requestedOrganizers = mission.requestedOrganizers.filter((org: any) => org._id.toString() !== organizerId);
+  }
+
+  await mission.save();
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Organizer removed successfull!',
+  });
+};
+
 export default {
   createMission,
   retriveMissionsByCreatorId,
@@ -353,4 +379,5 @@ export default {
   getAllMissionsOfOrganizer,
   inviteVolunteersToMission,
   retrieveVolunteersForInvitation,
+  removeOrganizerFromMission
 };

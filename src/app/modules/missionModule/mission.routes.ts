@@ -15,4 +15,6 @@ missionRouter.get("/organization/search", authorization('super-admin', 'admin', 
 missionRouter.get("/organizer/search", authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganizer);
 missionRouter.get("/retrive/organization/:organizationId", authorization('super-admin', 'admin', 'user'), missionControllers.retriveMissionsByOrganization);
 
+missionRouter.delete("/remove/organizer/:missionId", authorization('super-admin', 'admin', 'user'), missionControllers.removeOrganizerFromMission);
+
 export default missionRouter;

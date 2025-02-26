@@ -1,4 +1,4 @@
-import 'express-async-errors'; 
+import 'express-async-errors';
 import express, { Application, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import cors from 'cors';
@@ -34,7 +34,7 @@ const limiter = rateLimit({
 // app.use(limiter);
 
 // application middleware
-app.use('/', routers)
+app.use('/', routers);
 
 app.get('/health_check', (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({
