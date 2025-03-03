@@ -4,6 +4,7 @@ import CustomError from '../../errors';
 import sendResponse from '../../../shared/sendResponse';
 import { StatusCodes } from 'http-status-codes';
 import userServices from '../userModule/user.services';
+import Organization from './organization.model';
 
 // controller for create organization
 const createOrganization = async (req: Request, res: Response) => {
@@ -149,6 +150,59 @@ const retriveAllOrganizationsByConnectedVolunteer = async (req: Request, res: Re
   });
 };
 
+// controller for retrive organization where specific volunteer not included in those organizations
+const retriveOrganizationsByNotConnectedVolunteer = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 8;
+
+  const skip = (page - 1) * limit;
+  const organizations = await organizationService.getAllOrganizationsByNotConnectedVolunteer(id, skip, limit);
+
+  const totalOrganizations = organizations.length || 0;
+  const totalPages = Math.ceil(totalOrganizations / limit);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Organizations retrive successfull',
+    meta: {
+      totalData: totalOrganizations,
+      totalPage: totalPages,
+      currentPage: page,
+      limit: limit,
+    },
+    data: organizations,
+  });
+};
+
+// controller for join organizations for specific volunteer
+const joinOrganizations = async (req: Request, res: Response) => {
+  const { volunteerId, organizations } = req.body;
+
+  // Validate that organizations is an array
+  if (!Array.isArray(organizations)) {
+    throw new CustomError.BadRequestError('Organizations must be an array in request body!');
+  }
+
+  await Promise.all(
+    organizations.map(async (orgId: string) => {
+      await Organization.findByIdAndUpdate(
+        orgId,
+        { $addToSet: { connectedVolunteers: volunteerId } }, // Ensures unique addition
+        { new: true }
+      );
+    })
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Volunteer joined organizations successfully',
+  });
+};
+
+
 export default {
   createOrganization,
   retriveOrganizationsByCreatorId,
@@ -156,4 +210,6 @@ export default {
   retriveOrganizations,
   updateSpecificOrganization,
   retriveAllOrganizationsByConnectedVolunteer,
+  retriveOrganizationsByNotConnectedVolunteer,
+  joinOrganizations,
 };

@@ -105,6 +105,8 @@ const createNewEvent = async (req: Request, res: Response) => {
     zip: eventData.zip,
   };
 
+  eventData.joinedVolunteer = [...mission.connectedVolunteers];
+
   const event = await eventServices.createEvent(eventData);
 
   //   // create new invitation
@@ -139,7 +141,6 @@ const createNewEvent = async (req: Request, res: Response) => {
 // controller for search volunteers
 const searchVolunteers = async (req: Request, res: Response) => {
   const { missionId } = req.params;
-  // const { query } = req.query;
 
   const mission = await missionServices.getSpecificMissionsById(missionId);
   if (!mission) {
@@ -157,12 +158,14 @@ const searchVolunteers = async (req: Request, res: Response) => {
     }),
   );
 
-  // const filteredVolunteers = await userServices.searchVolunteers(query as string);
+  // Remove mission's connectedVolunteers from the volunteers array
+  const connectedVolunteersSet = new Set(mission.connectedVolunteers.map((v: any) => v.toString()));
+  volunteers = volunteers.filter((volunteer: any) => !connectedVolunteersSet.has(volunteer.toString()));
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
-    message: 'Volunteers retrive successfull',
+    message: 'Volunteers retrieved successfully',
     data: volunteers,
   });
 };

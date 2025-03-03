@@ -23,4 +23,10 @@ volunteerRouter.patch('/event/end-work', eventControllers.volunteerEndWork)
 
 volunteerRouter.patch('/mission/invitation/accept/:invitationId', invitationControllers.acceptMissionInviationForVolunteer)
 
+// get all organizations where a specific volunteer not connected in those organizations connectedVolunteers
+volunteerRouter.get('/retrieve/organizations/without/:id', organizationControllers.retriveOrganizationsByNotConnectedVolunteer);
+
+// join organizations as specific volunteer
+volunteerRouter.patch('/join-organization', organizationControllers.joinOrganizations)
+
 export default volunteerRouter;
