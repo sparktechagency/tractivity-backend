@@ -99,7 +99,7 @@ const getAllMissionsReportByOrganization = async (organizationId: string, startD
     filter.createdAt = { $lte: endDate };
   }
 
-  return await Mission.find(filter).select('report');
+  return await Mission.find(filter);
 };
 
 // service for get all mission by organizer and status

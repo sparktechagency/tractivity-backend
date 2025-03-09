@@ -162,7 +162,7 @@ const getAllEventsReportByVolunteer = async (volunteerId: string, startDate?: Da
     filter.createdAt = { $lte: endDate };
   }
 
-  return await Event.find(filter).select('report');
+  return await Event.find(filter);
 };
 
 // service retrive all events by missionId
@@ -243,7 +243,7 @@ const getAllEventsReportByMission = async (missionId: string, startDate?: Date, 
     filter.createdAt = { $lte: endDate };
   }
 
-  return await Event.find(filter).select('report');
+  return await Event.find(filter);
 };
 
 export default {
