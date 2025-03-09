@@ -99,7 +99,28 @@ const getAllMissionsReportByOrganization = async (organizationId: string, startD
     filter.createdAt = { $lte: endDate };
   }
 
-  return await Mission.find(filter);
+  return await Mission.find(filter).populate([
+    {
+      path: 'connectedOrganizations',
+      select: 'name description',
+    },
+    {
+      path: 'connectedOrganizers',
+      select: 'fullName email',
+    },
+    {
+      path: 'requestedOrganizers',
+      select: 'image fullName profession',
+    },
+    {
+      path: 'connectedVolunteers',
+      select: 'image fullName profession',
+    },
+    {
+      path: 'requestedVolunteers',
+      select: 'image fullName profession',
+    },
+  ]);
 };
 
 // service for get all mission by organizer and status
