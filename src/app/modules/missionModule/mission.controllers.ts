@@ -236,6 +236,27 @@ const retriveMissionsByOrganization = async (req: Request, res: Response) => {
   });
 };
 
+// controller for retrive all missions report by organization
+const retriveAllMissionsReportByOrganization = async (req: Request, res: Response) => {
+  const { organizationId } = req.params;
+  const { fromDate, toDate } = req.query;
+
+  // Convert fromDate and toDate to JavaScript Date objects
+  const startDate = fromDate ? new Date(fromDate as string) : undefined;
+  const endDate = toDate ? new Date(toDate as string) : undefined;
+
+  const missions = await missionServices.getAllMissionsReportByOrganization(
+    organizationId, startDate, endDate
+  );
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Mission retrieve successful',
+    data: missions,
+  });
+};
+
 // controller for retrive all missions of organizer
 const getAllMissionsOfOrganizer = async (req: Request, res: Response) => {
   const { organizerId } = req.params;
@@ -284,7 +305,7 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
   // first check the volunteer is already invited to the mission. only unique volunteers should be invited
   await Promise.all(
     volunteers.map(async (volunteer: string) => {
-      if (mission.requestedVolunteers.find((v: any) => v.toString() !== volunteer)) {
+      if (mission.requestedVolunteers.length > 0 && mission.requestedVolunteers.find((v: any) => v.toString() !== volunteer)) {
         // create invitation for volunteer
         const invitationPayload = {
           consumerId: volunteer,
@@ -297,8 +318,10 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
         await Invitation.create(invitationPayload);
 
         mission.requestedVolunteers.push(...volunteers);
-        await mission.save();
+        console.log(mission)
       }
+      mission.requestedVolunteers.push(...volunteers);
+      await mission.save();
     }),
   );
 
@@ -320,24 +343,45 @@ const retrieveVolunteersForInvitation = async (req: Request, res: Response) => {
 
   let volunteers: any[] = [];
 
+  // Collect unique volunteers from connected organizations
   mission.connectedOrganizations.forEach((organization: any) => {
     organization.connectedVolunteers.forEach((volunteer: any) => {
-      if (!volunteers.includes(volunteer.volunteer)) {
-        volunteers.push(volunteer.volunteer);
+      if (!volunteers.some((v: any) => v._id.toString() === volunteer._id.toString())) {
+        volunteers.push(volunteer);
       }
     });
   });
 
-  // check for only unique volunteers, who are not member of requestedVolunteers and connectedVolunteers array
+  // Check for only unique volunteers who are not part of requestedVolunteers and connectedVolunteers
   const uniqueVolunteers = volunteers.filter(
-    (volunteer: any) => !mission.requestedVolunteers.includes(volunteer) && !mission.connectedVolunteers.includes(volunteer),
+    (volunteer: any) => 
+      !mission.requestedVolunteers.some((v: any) => v._id.toString() === volunteer._id.toString()) && 
+      !mission.connectedVolunteers.some((v: any) => v._id.toString() === volunteer._id.toString())
   );
+
+  let volunteersWithDetails: any = [];
+  if (uniqueVolunteers.length > 0) {
+    await Promise.all(
+      uniqueVolunteers.map(async (vol: any) => {
+        const volunteer = await userServices.getSpecificUser(vol._id); // Assuming _id is the unique identifier
+        if (volunteer) {
+          const payload = {
+            fullName: volunteer.fullName,
+            profession: volunteer.profession,
+            image: volunteer.image,
+            _id: volunteer._id
+          }
+          volunteersWithDetails.push(payload);
+        }
+      }),
+    );
+  }
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
-    message: 'Volunteers retrieved successfull!',
-    data: uniqueVolunteers,
+    message: 'Volunteers retrieved successfully!',
+    data: volunteersWithDetails,
   });
 };
 
@@ -379,5 +423,6 @@ export default {
   getAllMissionsOfOrganizer,
   inviteVolunteersToMission,
   retrieveVolunteersForInvitation,
-  removeOrganizerFromMission
+  removeOrganizerFromMission,
+  retriveAllMissionsReportByOrganization
 };

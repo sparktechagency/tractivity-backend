@@ -88,25 +88,35 @@ const acceptInvitation = async (req: Request, res: Response) => {
 // controller for retrive all invitations by volunteer
 const retriveInvitationsByVolunteer = async (req: Request, res: Response) => {
   const { volunteerId } = req.params;
+  const { type } = req.query;
+  let invitations: any = [];
 
-  const invitations: any = await Invitation.find({ consumerId: volunteerId }).populate({
-    path: 'contentId',
-    populate: {
-      path: 'missionId',
-      select: 'name connectedOrganizers connectedOrganizations',
-      populate: [
-        {
-          path: 'connectedOrganizations',
-          select: 'name creator.creatorRole',
-        },
-        {
-          path: 'connectedOrganizers',
-          select: 'fullName image',
-        },
-      ],
-    },
-    select: '-invitedVolunteer -joinedVolunteer',
-  });
+  if (type === 'event') {
+    invitations = await Invitation.find({ consumerId: volunteerId, type: 'event' }).populate({
+      path: 'contentId',
+      populate: {
+        path: 'missionId',
+        select: 'name connectedOrganizers connectedOrganizations',
+        populate: [
+          {
+            path: 'connectedOrganizations',
+            select: 'name creator.creatorRole',
+          },
+          {
+            path: 'connectedOrganizers',
+            select: 'fullName image',
+          },
+        ],
+      },
+      select: '-invitedVolunteer -joinedVolunteer',
+    });
+  } else if (type === 'mission') {
+    invitations = await Invitation.find({ consumerId: volunteerId, type: 'mission' }).populate({
+      path: 'contentId',
+    });
+  } else {
+    throw new CustomError.BadRequestError('Invalid type in query');
+  }
 
   // Send the processed invitations
   sendResponse(res, {

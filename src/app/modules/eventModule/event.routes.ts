@@ -8,6 +8,8 @@ eventRouter.get('/volunteer/mission/:missionId', eventControllers.searchVoluntee
 eventRouter.get('/retrive/search', eventControllers.retriveAllEvents);
 eventRouter.get('/retrive/organizer/:id', eventControllers.retriveEventsByOrganizer);
 eventRouter.get('/retrive/mission/:id', eventControllers.retriveAllEventsByMissionId);
+eventRouter.get('/retrive/report/mission/:missionId', eventControllers.retriveAllEventsReportByMission);
+
 eventRouter.delete('/delete/:id', eventControllers.deleteSpecificEvent);
 eventRouter.patch('/deliver/:id', eventControllers.updateSpecificEvent);
 eventRouter.get('/retrive/:id', eventControllers.retriveSpecificEventsById);

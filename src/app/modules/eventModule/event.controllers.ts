@@ -162,11 +162,33 @@ const searchVolunteers = async (req: Request, res: Response) => {
   const connectedVolunteersSet = new Set(mission.connectedVolunteers.map((v: any) => v.toString()));
   volunteers = volunteers.filter((volunteer: any) => !connectedVolunteersSet.has(volunteer.toString()));
 
+  // console.log(volunteers);
+
+  let volunteersWithDetails: any = [];
+  if (volunteers.length > 0) {
+    await Promise.all(
+      volunteers.map(async (vol: any) => {
+        const volunteer = await userServices.getSpecificUser(vol);
+        if (volunteer) {
+          const payload = {
+            fullName: volunteer.fullName,
+            profession: volunteer.profession,
+            image: volunteer.image,
+            _id: volunteer._id,
+          };
+          volunteersWithDetails.push(payload);
+        }
+      }),
+    );
+  }
+
+  // console.log(volunteersWithDetails)
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Volunteers retrieved successfully',
-    data: volunteers,
+    data: volunteersWithDetails || [],
   });
 };
 
@@ -268,6 +290,27 @@ const retriveEventsByVolunteer = async (req: Request, res: Response) => {
   });
 };
 
+// retrieve all events report by specific volunteer
+const retriveAllEventsReportByVolunteer = async (req: Request, res: Response) => {
+  const { volunteerId } = req.params;
+  const { fromDate, toDate } = req.query;
+
+  console.log(volunteerId, fromDate, toDate);
+
+  // Convert fromDate and toDate to JavaScript Date objects
+  const startDate = fromDate ? new Date(fromDate as string) : undefined;
+  const endDate = toDate ? new Date(toDate as string) : undefined;
+
+  const events = await eventServices.getAllEventsReportByVolunteer(volunteerId, startDate, endDate);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Events report retrieved successfully',
+    data: events,
+  });
+};
+
 // retrive all events by missionId
 const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -290,6 +333,27 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
       currentPage: page,
       limit: limit,
     },
+    data: events,
+  });
+};
+
+// controller for retrieve all events report by mission
+const retriveAllEventsReportByMission = async (req: Request, res: Response) => {
+  const { missionId } = req.params;
+  const { fromDate, toDate } = req.query;
+
+  console.log(missionId, fromDate, toDate);
+
+  // Convert fromDate and toDate to JavaScript Date objects
+  const startDate = fromDate ? new Date(fromDate as string) : undefined;
+  const endDate = toDate ? new Date(toDate as string) : undefined;
+
+  const events = await eventServices.getAllEventsReportByMission(missionId, startDate, endDate);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Events report retrieved successfully',
     data: events,
   });
 };
@@ -504,4 +568,6 @@ export default {
   volunteerStartWork,
   volunteerEndWork,
   retriveAllEvents,
+  retriveAllEventsReportByMission,
+  retriveAllEventsReportByVolunteer,
 };

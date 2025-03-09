@@ -146,6 +146,25 @@ const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string
   });
 };
 
+// service for retrieve all events report by specific volunteer
+const getAllEventsReportByVolunteer = async (volunteerId: string, startDate?: Date, endDate?: Date) => {
+  const filter: any = { 'joinedVolunteer.volunteer': volunteerId };
+
+  // Add date range filters if both fromDate and toDate are provided
+  if (startDate && endDate) {
+    filter.createdAt = {
+      $gte: startDate,
+      $lte: endDate,
+    };
+  } else if (startDate) {
+    filter.createdAt = { $gte: startDate };
+  } else if (endDate) {
+    filter.createdAt = { $lte: endDate };
+  }
+
+  return await Event.find(filter).select('report');
+};
+
 // service retrive all events by missionId
 const retriveAllEventsByMissionId = async (id: string, limit: number, skip: number) => {
   return await Event.find({ missionId: id })
@@ -208,6 +227,25 @@ const deleteSpecificEvent = async (id: string) => {
   return await Event.deleteOne({ _id: id });
 };
 
+// service for retrieve all events report by mission
+const getAllEventsReportByMission = async (missionId: string, startDate?: Date, endDate?: Date) => {
+  const filter: any = { missionId };
+
+  // Add date range filters if both fromDate and toDate are provided
+  if (startDate && endDate) {
+    filter.createdAt = {
+      $gte: startDate,
+      $lte: endDate,
+    };
+  } else if (startDate) {
+    filter.createdAt = { $gte: startDate };
+  } else if (endDate) {
+    filter.createdAt = { $lte: endDate };
+  }
+
+  return await Event.find(filter).select('report');
+};
+
 export default {
   createEvent,
   retriveEventsByOrganizer,
@@ -220,4 +258,6 @@ export default {
   retriveEventsByVolunteer,
   retriveAllEvents,
   deleteSpecificEvent,
+  getAllEventsReportByMission,
+  getAllEventsReportByVolunteer,
 };

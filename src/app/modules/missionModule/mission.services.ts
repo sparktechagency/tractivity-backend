@@ -81,6 +81,27 @@ const getAllMissionsByOrganization = async (organizationId: string) => {
   return missions;
 };
 
+// service for retrieve all mission report by organization
+const getAllMissionsReportByOrganization = async (organizationId: string, startDate?: Date, endDate?: Date) => {
+  const filter: any = {
+    connectedOrganizations: { $in: [organizationId] },
+  };
+
+  // Add date range filters if both fromDate and toDate are provided
+  if (startDate && endDate) {
+    filter.createdAt = {
+      $gte: startDate,
+      $lte: endDate,
+    };
+  } else if (startDate) {
+    filter.createdAt = { $gte: startDate };
+  } else if (endDate) {
+    filter.createdAt = { $lte: endDate };
+  }
+
+  return await Mission.find(filter).select('report');
+};
+
 // service for get all mission by organizer and status
 const getAllMissionsByOrganizerAndStatus = async (organizerId: string, status: string, skip: number, limit: number) => {
   return await Mission.find({
@@ -113,6 +134,11 @@ const getAllMissionsByOrganizerAndStatus = async (organizerId: string, status: s
     ]);
 };
 
+// service for get specific mission without populating
+const getSpecificMissionWithoutPopulating = async (id: string) => {
+  return await Mission.findOne({ _id: id });
+};
+
 export default {
   createMission,
   getSpecificMissionsById,
@@ -121,4 +147,6 @@ export default {
   updateSpecificMission,
   getAllMissionsByOrganization,
   getAllMissionsByOrganizerAndStatus,
+  getSpecificMissionWithoutPopulating,
+  getAllMissionsReportByOrganization,
 };
