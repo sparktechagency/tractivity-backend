@@ -342,7 +342,7 @@ const retriveAllEventsReportByMission = async (req: Request, res: Response) => {
   const { missionId } = req.params;
   const { fromDate, toDate } = req.query;
 
-  console.log(missionId, fromDate, toDate);
+  // console.log(missionId, fromDate, toDate);
 
   // Convert fromDate and toDate to JavaScript Date objects
   const startDate = fromDate ? new Date(fromDate as string) : undefined;

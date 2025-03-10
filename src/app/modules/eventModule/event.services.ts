@@ -256,22 +256,24 @@ const getAllEventsReportByMission = async (missionId: string, startDate?: Date, 
     filter.createdAt = { $lte: endDate };
   }
 
-  return await Event.find(filter).populate([
-    {
-      path: 'missionId',
-      select: 'name',
-      populate: [
-        {
-          path: 'connectedOrganizations',
-          select: 'name',
-        },
-      ],
-    },
-    {
-      path: 'joinedVolunteer.volunteer',
-      select: 'fullName image',
-    },
-  ]);
+  return await Event.find(filter)
+    .select('-invitedVolunteer -joinedVolunteer._id -joinedVolunteer.workStatus -joinedVolunteer.startInfo')
+    .populate([
+      {
+        path: 'missionId',
+        select: 'name',
+        populate: [
+          {
+            path: 'connectedOrganizations',
+            select: 'name',
+          },
+        ],
+      },
+      {
+        path: 'joinedVolunteer.volunteer',
+        select: 'fullName image',
+      },
+    ]);
 };
 
 export default {
