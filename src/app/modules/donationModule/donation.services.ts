@@ -24,6 +24,13 @@ const getDonationsByDonerId = async (donerId: string) => {
   return await Donation.find({ 'doner.donerId': donerId });
 };
 
+// service for create or update donation text
+const createOrUpdateDonationText = async (donationId: string, text: string) => {
+  const donation = await Donation.findByIdAndUpdate(donationId, { text }, { new: true });
+  return donation;
+};
+
+
 export default {
   createDonation,
   getAllDonations,

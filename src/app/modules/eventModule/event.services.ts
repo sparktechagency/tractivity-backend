@@ -92,11 +92,63 @@ const searchEvents = async (searchQuery: string) => {
 };
 
 // service for search events
-const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string, status: string, date: string) => {
+// const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string, status: string, date: string) => {
+//   type Query = {
+//     joinedVolunteer?: { $elemMatch: { volunteer: string } };
+//     $text?: { $search: string };
+//     status?: string;
+//     date?: { $gte: Date; $lt: Date };
+//   };
+
+//   const query: Query = {};
+
+//   // Filter by volunteerId in the joinedVolunteer array
+//   if (volunteerId) {
+//     query.joinedVolunteer = { $elemMatch: { volunteer: volunteerId } };
+//   }
+
+//   // Add full-text search if searchQuery is provided
+//   if (searchQuery) {
+//     query.$text = { $search: searchQuery };
+//   }
+
+//   // Add status filter if provided
+//   if (status) {
+//     query.status = status;
+//   }
+
+//   // Add date filter if provided (specific day)
+//   if (date) {
+//     const targetDate = new Date(date);
+//     const nextDate = new Date(targetDate);
+//     nextDate.setDate(targetDate.getDate() + 1); // Increment by 1 day
+
+//     query.date = {
+//       $gte: targetDate, // Start of the day
+//       $lt: nextDate, // Start of the next day
+//     };
+//   }
+
+//   // Execute the query
+//   return await Event.find(query).populate({
+//     path: 'missionId',
+//     select: 'connectedOrganizations connectedOrganizers',
+//     populate: [
+//       {
+//         path: 'connectedOrganizations',
+//         select: 'name',
+//       },
+//       {
+//         path: 'connectedOrganizers',
+//         select: 'fullName image',
+//       },
+//     ],
+//   });
+// };
+const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string, workStatus: string, date: string) => {
   type Query = {
-    joinedVolunteer?: { $elemMatch: { volunteer: string } };
+    joinedVolunteer?: { $elemMatch: { volunteer: string; workStatus?: string } };
     $text?: { $search: string };
-    status?: string;
     date?: { $gte: Date; $lt: Date };
   };
 
@@ -105,16 +157,16 @@ const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string
   // Filter by volunteerId in the joinedVolunteer array
   if (volunteerId) {
     query.joinedVolunteer = { $elemMatch: { volunteer: volunteerId } };
+
+    // Filter by volunteer-specific workStatus
+    if (workStatus) {
+      query.joinedVolunteer.$elemMatch.workStatus = workStatus;
+    }
   }
 
   // Add full-text search if searchQuery is provided
   if (searchQuery) {
     query.$text = { $search: searchQuery };
-  }
-
-  // Add status filter if provided
-  if (status) {
-    query.status = status;
   }
 
   // Add date filter if provided (specific day)

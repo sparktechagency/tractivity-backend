@@ -67,6 +67,10 @@ const createConversation = async (req: Request, res: Response) => {
       conversationData.sender.senderId,
       conversationData.receiver.receiverId,
     );
+
+    if (!existingConversation) {
+      existingConversation = await conversationService.createConversation(conversationData);
+    }
   } else if (conversationData.type === 'group') {
     // Handle group conversation type
     existingConversation = await conversationService.retriveConversationByReceiverId(conversationData.receiver.receiverId);
@@ -87,6 +91,8 @@ const createConversation = async (req: Request, res: Response) => {
   } else {
     throw new CustomError.BadRequestError('Invalid conversation type!');
   }
+
+  console.log(existingConversation);
 
   // Join or create room for the conversation
   socketManager.joinDirectUserOrCreateOnlyRoom(existingConversation as Partial<IConversation>);

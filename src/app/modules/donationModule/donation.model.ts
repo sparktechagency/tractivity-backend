@@ -19,8 +19,8 @@ const donationSchema = new mongoose.Schema<IDonation>({
     email: String,
     firstName: String,
     lastName: String,
-    country: String,
-    state: String,
+    // country: String,
+    // state: String,
     amount: {
         value: {
             type: Number,

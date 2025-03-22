@@ -33,7 +33,8 @@ const getSpecificOrganizationById = async (id: string) => {
 
 // service for retrive all organizations by specific connected volunteer
 const getAllOrganizationsByConnectedVolunteer = async (id: string, skip: number, limit: number) => {
-  return await Organization.find({ 'connectedVolunteers.volunteerId': id }).skip(skip).limit(limit);
+  console.log(id);
+  return await Organization.find({ connectedVolunteers: id }).skip(skip).limit(limit);
 };
 
 const getAllOrganizationsByNotConnectedVolunteer = async (volunteerId: string, skip: number, limit: number) => {
@@ -42,7 +43,6 @@ const getAllOrganizationsByNotConnectedVolunteer = async (volunteerId: string, s
   })
     .skip(skip)
     .limit(limit);
-
 };
 
 export default {

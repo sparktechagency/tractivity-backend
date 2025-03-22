@@ -94,7 +94,7 @@ class SocketManager {
 
   // Join both sender and receiver to a conversation room
   joinDirectUserOrCreateOnlyRoom(conversation: Partial<IConversation>): void {
-    if (!conversation._id || !conversation.sender?.senderId || !conversation.receiver?.receiverId) {
+    if (!conversation?._id || !conversation.sender?.senderId || !conversation.receiver?.receiverId) {
       console.warn('Invalid conversation data provided to joinUser in socket!');
       throw new Error('Invalid conversation data provided to joinUser in socket!');
     }

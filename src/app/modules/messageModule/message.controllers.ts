@@ -59,7 +59,12 @@ const createMessage = async (req: Request, res: Response) => {
   }
 
   const message = await messageServices.createMessage(messageData);
-  socketManager.sendMessage(messageData.conversation, message);
+  let formatedMessage: any;
+
+  if(message){
+    formatedMessage = await messageServices.retrieveMessageByMessageId(message._id as string)
+  }
+  socketManager.sendMessage(messageData.conversation, formatedMessage);
 
   // const getConversation = await conversationService.retriveConversationByConversationId(messageData.conversation)
   // // create notification for new message
@@ -73,9 +78,10 @@ const createMessage = async (req: Request, res: Response) => {
 
   if (messageData.type === 'text') {
     conversation.lastMessage = message._id as Types.ObjectId;
-  } else {
-    conversation.lastMessage = 'Sent you a attachment' as string;
   }
+  // else {
+  //   conversation.lastMessage = 'Sent you a attachment' as string;
+  // }
 
   await conversation.save();
 

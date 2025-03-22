@@ -105,7 +105,7 @@ const createNewEvent = async (req: Request, res: Response) => {
     zip: eventData.zip,
   };
 
-  eventData.joinedVolunteer = [...mission.connectedVolunteers];
+  // eventData.joinedVolunteer = [...mission.connectedVolunteers];
 
   const event = await eventServices.createEvent(eventData);
 
@@ -387,7 +387,7 @@ const volunteerStartWork = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('No volunteer found in the event!');
   }
 
-  if (volunteerInEvent.workStatus !== 'intialized') {
+  if (volunteerInEvent.startInfo.isStart) {
     throw new CustomError.BadRequestError('Volunteer has already procceed the work!');
   }
 

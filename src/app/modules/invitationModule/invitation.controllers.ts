@@ -35,12 +35,23 @@ const getOrganizerInvitedMissions = async (req: Request, res: Response) => {
 // controller for reject specific invitation
 const rejectInvitation = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const invitation = await invitationServices.retriveInvitationById(id);
+  // console.log(invitation);
+
+  if (!invitation) {
+    throw new CustomError.BadRequestError('Invitation not found!');
+  }
+
+  // const mission = await missionServices.getSpecificMissionWithoutPopulating(inviations?.contentId as unknown as string)
 
   const updatedInvitation = await Invitation.findByIdAndUpdate(id, { status: 'rejected' }, { new: true });
 
   if (!updatedInvitation) {
     throw new CustomError.BadRequestError('Failed to reject invitation!');
   }
+
+  invitation.status = 'rejected';
+  await invitation.save();
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -78,6 +89,9 @@ const acceptInvitation = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('Failed to accept invitation!');
   }
 
+  invitation.status = 'accepted';
+  await invitation.save();
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
@@ -92,7 +106,7 @@ const retriveInvitationsByVolunteer = async (req: Request, res: Response) => {
   let invitations: any = [];
 
   if (type === 'event') {
-    invitations = await Invitation.find({ consumerId: volunteerId, type: 'event' }).populate({
+    invitations = await Invitation.find({ consumerId: volunteerId, type: 'event', status: 'invited' }).populate({
       path: 'contentId',
       populate: {
         path: 'missionId',
@@ -111,7 +125,7 @@ const retriveInvitationsByVolunteer = async (req: Request, res: Response) => {
       select: '-invitedVolunteer -joinedVolunteer',
     });
   } else if (type === 'mission') {
-    invitations = await Invitation.find({ consumerId: volunteerId, type: 'mission' }).populate({
+    invitations = await Invitation.find({ consumerId: volunteerId, type: 'mission', status: 'invited' }).populate({
       path: 'contentId',
     });
   } else {
@@ -156,6 +170,8 @@ const joinVolunteerToEvent = async (req: Request, res: Response) => {
   );
   // console.log('invited array', volunteerInInvitedVolunteerListInEvent)
   if (volunteerInInvitedVolunteerListInEvent) {
+    // console.log(volunteerInInvitedVolunteerListInEvent)
+    volunteerInInvitedVolunteerListInEvent.workStatus = 'running';
     // console.log(volunteerInInvitedVolunteerListInEvent);
     event.joinedVolunteer.push(volunteerInInvitedVolunteerListInEvent);
     event.invitedVolunteer = event.invitedVolunteer.filter((reqV: any) => reqV.volunteer.toString() !== volunteerId);
@@ -175,8 +191,8 @@ const joinVolunteerToEvent = async (req: Request, res: Response) => {
     socketManager.joinUserToARoom(eventId, volunteerId);
   }
 
-  // invitation.status = 'accepted';
-  // await invitation.save();
+  invitation.status = 'accepted';
+  await invitation.save();
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

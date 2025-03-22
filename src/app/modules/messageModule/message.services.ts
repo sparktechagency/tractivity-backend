@@ -14,7 +14,15 @@ const retriveMessages = async (id: string) => {
   });
 };
 
+const retrieveMessageByMessageId = async (id: string) => {
+  return await Message.findOne({ _id: id }).populate({
+    path: 'sender',
+    select: 'fullName image',
+  });
+}
+
 export default {
   createMessage,
   retriveMessages,
+  retrieveMessageByMessageId
 };
