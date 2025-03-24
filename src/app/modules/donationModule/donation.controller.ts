@@ -3,6 +3,7 @@ import sendResponse from '../../../shared/sendResponse';
 import { StatusCodes } from 'http-status-codes';
 import CustomError from '../../errors';
 import donationServices from './donation.services';
+import DonationText from './donationText.model';
 
 // controller for create new donation
 const createDonation = async (req: Request, res: Response) => {
@@ -80,9 +81,43 @@ const getDonationsByDonerId = async (req: Request, res: Response) => {
   });
 };
 
+// controller for add donation text for donation
+const createOrUpdateDonationText = async (req: Request, res: Response) => {
+  const { text } = req.body;
+  const existingDonationText = await DonationText.findOne({});
+  if (existingDonationText) {
+    existingDonationText.text = text;
+    await existingDonationText.save();
+  } else {
+    const newDonationText = new DonationText({ text: text });
+    await newDonationText.save();
+  }
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Donation text updated successfully',
+    data: existingDonationText,
+  });
+};
+
+// controller for get donation text for donation
+const getDonationText = async (req: Request, res: Response) => {
+  const existingDonationText = await DonationText.findOne({});
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Donation text retrieved successfully',
+    data: existingDonationText ? existingDonationText : null,
+  });
+};
+
 export default {
   createDonation,
   getAllDonations,
   getSpecificDonation,
   getDonationsByDonerId,
+  createOrUpdateDonationText,
+  getDonationText,
 };

@@ -13,6 +13,9 @@ import invitationServices from '../invitationModule/invitation.services';
 import organizationService from '../organizationModule/organization.service';
 import { calculateDistance } from '../../../utils/calculateDistance';
 import User from '../userModule/user.model';
+import { Types } from 'mongoose';
+import SocketManager from '../../socket/manager.socket';
+import { addUserToRoom } from '../roomMembershipModule/roomMembership.utils';
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
@@ -108,6 +111,22 @@ const createNewEvent = async (req: Request, res: Response) => {
   // eventData.joinedVolunteer = [...mission.connectedVolunteers];
 
   const event = await eventServices.createEvent(eventData);
+
+
+  // Add creator to event conversation
+  // const creatorEntry = {
+  //   volunteer: eventData.creatorId as Types.ObjectId,
+  //   workStatus: 'organizing',
+  // };
+
+  // event.joinedVolunteer.push(creatorEntry);
+  // await event.save();
+
+  // Join creator to event chat
+  const socketManager = SocketManager.getInstance();
+  const eventId = event._id!.toString();
+  await addUserToRoom(eventData.creatorId, eventId);
+  socketManager.joinUserToARoom(eventId, eventData.creatorId);
 
   //   // create new invitation
   await Promise.all(

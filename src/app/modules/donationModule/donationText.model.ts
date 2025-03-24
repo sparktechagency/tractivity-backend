@@ -2,7 +2,10 @@ import mongoose from 'mongoose';
 
 const donationTextSchema = new mongoose.Schema(
   {
-    text: String,
+    text: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,

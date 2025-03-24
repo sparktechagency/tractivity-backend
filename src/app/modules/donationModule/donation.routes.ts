@@ -10,5 +10,7 @@ donationRouter.post('/create', donationController.createDonation);
 donationRouter.get('/retrive/all', donationController.getAllDonations);
 donationRouter.get('/retrive/:id', donationController.getSpecificDonation);
 donationRouter.get('/retrive/doner/:donerId', donationController.getDonationsByDonerId);
+donationRouter.post('/text/create-or-update', donationController.createOrUpdateDonationText)
+donationRouter.get('/text/retrieve', donationController.getDonationText)
 
 export default donationRouter;
