@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 import notFound from './app/middlewares/notFound';
 import routers from './app/routers';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
+import rootDesign from './app/middlewares/rootDesign';
 
 const app: Application = express();
 
@@ -35,6 +36,8 @@ const limiter = rateLimit({
 
 // application middleware
 app.use('/', routers);
+
+app.get('/', rootDesign);
 
 app.get('/health_check', (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({
