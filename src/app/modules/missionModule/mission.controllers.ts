@@ -7,6 +7,7 @@ import missionServices from './mission.services';
 import Invitation from '../invitationModule/invitation.model';
 import User from '../userModule/user.model';
 import Organization from '../organizationModule/organization.model';
+import organizationService from '../organizationModule/organization.service';
 
 // controller for create mission
 const createMission = async (req: Request, res: Response) => {
@@ -202,18 +203,41 @@ const searchOrganization = async (req: Request, res: Response) => {
 
 // controller for search leader/organizer
 const searchOrganizer = async (req: Request, res: Response) => {
-  const { query } = req.query; // Get the search query from the request
+  const { query } = req.query;
+  const { organizations } = req.body;
 
-  // Define the search condition
-  const searchCondition: any = { roles: 'organizer' };
-
-  // If a query is provided and it's a string, add a text search condition
-  if (query && typeof query === 'string') {
-    searchCondition.$text = { $search: query };
+  if (!organizations || organizations.length <= 0) {
+    throw new CustomError.BadRequestError('Organizations must have at least one');
   }
 
-  // Find organizers based on the search condition
-  const organizers = await User.find(searchCondition).select('image fullName profession');
+  const organizers: any[] = [];
+  const addedOrganizerIds = new Set<string>(); // to track unique organizers
+
+  await Promise.all(
+    organizations.map(async (org: any) => {
+      const organization = await organizationService.getSpecificOrganizationById(org);
+
+      if (organization && organization.connectedVolunteers.length > 0) {
+        const volunteerPromises = organization.connectedVolunteers.map(async (vol: any) => {
+          const user:any = await userServices.getSpecificUser(vol);
+          if (
+            user &&
+            user.roles.includes('organizer') &&
+            !addedOrganizerIds.has(user._id.toString()) // check uniqueness
+          ) {
+            organizers.push({
+              image: user.image,
+              fullName: user.fullName,
+              profession: user.profession,
+            });
+            addedOrganizerIds.add(user._id.toString());
+          }
+        });
+
+        await Promise.all(volunteerPromises);
+      }
+    })
+  );
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -245,9 +269,7 @@ const retriveAllMissionsReportByOrganization = async (req: Request, res: Respons
   const startDate = fromDate ? new Date(fromDate as string) : undefined;
   const endDate = toDate ? new Date(toDate as string) : undefined;
 
-  const missions = await missionServices.getAllMissionsReportByOrganization(
-    organizationId, startDate, endDate
-  );
+  const missions = await missionServices.getAllMissionsReportByOrganization(organizationId, startDate, endDate);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -318,7 +340,7 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
         await Invitation.create(invitationPayload);
 
         mission.requestedVolunteers.push(...volunteers);
-        console.log(mission)
+        console.log(mission);
       }
       mission.requestedVolunteers.push(...volunteers);
       await mission.save();
@@ -354,9 +376,9 @@ const retrieveVolunteersForInvitation = async (req: Request, res: Response) => {
 
   // Check for only unique volunteers who are not part of requestedVolunteers and connectedVolunteers
   const uniqueVolunteers = volunteers.filter(
-    (volunteer: any) => 
-      !mission.requestedVolunteers.some((v: any) => v._id.toString() === volunteer._id.toString()) && 
-      !mission.connectedVolunteers.some((v: any) => v._id.toString() === volunteer._id.toString())
+    (volunteer: any) =>
+      !mission.requestedVolunteers.some((v: any) => v._id.toString() === volunteer._id.toString()) &&
+      !mission.connectedVolunteers.some((v: any) => v._id.toString() === volunteer._id.toString()),
   );
 
   let volunteersWithDetails: any = [];
@@ -369,8 +391,8 @@ const retrieveVolunteersForInvitation = async (req: Request, res: Response) => {
             fullName: volunteer.fullName,
             profession: volunteer.profession,
             image: volunteer.image,
-            _id: volunteer._id
-          }
+            _id: volunteer._id,
+          };
           volunteersWithDetails.push(payload);
         }
       }),
@@ -424,5 +446,5 @@ export default {
   inviteVolunteersToMission,
   retrieveVolunteersForInvitation,
   removeOrganizerFromMission,
-  retriveAllMissionsReportByOrganization
+  retriveAllMissionsReportByOrganization,
 };

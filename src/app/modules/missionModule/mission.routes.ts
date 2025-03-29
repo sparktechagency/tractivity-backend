@@ -16,7 +16,7 @@ missionRouter.delete('/delete/:id', authorization('super-admin', 'admin', 'user'
 missionRouter.patch('/update/:id', authorization('super-admin', 'admin', 'user'), missionControllers.updateSpecificMission);
 
 missionRouter.get('/organization/search', authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganization);
-missionRouter.get('/organizer/search', authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganizer);
+missionRouter.post('/organizer/search', authorization('super-admin', 'admin', 'user'), missionControllers.searchOrganizer);
 missionRouter.get(
   '/retrive/organization/:organizationId',
   authorization('super-admin', 'admin', 'user'),
