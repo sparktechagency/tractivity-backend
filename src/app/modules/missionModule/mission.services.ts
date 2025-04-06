@@ -129,8 +129,6 @@ const getAllMissionsByOrganizerAndStatus = async (organizerId: string, status: s
     connectedOrganizers: { $in: [organizerId] },
     status,
   })
-    .skip(skip)
-    .limit(limit)
     .populate([
       {
         path: 'connectedOrganizations',

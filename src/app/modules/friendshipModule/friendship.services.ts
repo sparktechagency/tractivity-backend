@@ -23,8 +23,6 @@ const getRequestedFriendshipByResponder = async (responderId: string, searchQuer
   }
 
   return await Friendship.find(query)
-    .skip(skip)
-    .limit(limit)
     .populate([
         {
           path: 'requester.requesterId',
@@ -50,8 +48,6 @@ const getAllFriendshipByUserId = async (userId: string, searchQuery: string, ski
   }
 
   return await Friendship.find(query)
-    .skip(skip)
-    .limit(limit)
     .populate([
       {
         path: 'requester.requesterId',

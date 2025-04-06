@@ -233,8 +233,6 @@ const getAllEventsReportByVolunteer = async (volunteerId: string, startDate?: Da
 // service retrive all events by missionId
 const retriveAllEventsByMissionId = async (id: string, limit: number, skip: number) => {
   return await Event.find({ missionId: id })
-    .skip(skip)
-    .limit(limit)
     .select('-invitedVolunteer -joinedVolunteer._id -joinedVolunteer.workStatus -joinedVolunteer.startInfo')
     .populate([
       {

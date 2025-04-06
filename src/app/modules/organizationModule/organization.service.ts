@@ -8,7 +8,7 @@ const createOrganization = async (data: Partial<IOrganization>) => {
 
 // service for get all organization by creator
 const getAllOrganizationsByCreator = async (id: string, skip: number, limit: number) => {
-  return await Organization.find({ 'creator.creatorId': id }).skip(skip).limit(limit);
+  return await Organization.find({ 'creator.creatorId': id })
 };
 
 // service for delete organization by id
@@ -34,15 +34,15 @@ const getSpecificOrganizationById = async (id: string) => {
 // service for retrive all organizations by specific connected volunteer
 const getAllOrganizationsByConnectedVolunteer = async (id: string, skip: number, limit: number) => {
   console.log(id);
-  return await Organization.find({ connectedVolunteers: id }).skip(skip).limit(limit);
+  return await Organization.find({ connectedVolunteers: id })
 };
 
 const getAllOrganizationsByNotConnectedVolunteer = async (volunteerId: string, skip: number, limit: number) => {
   return await Organization.find({
     connectedVolunteers: { $nin: [volunteerId] }, // Exclude organizations where volunteerId is in connectedVolunteers
   })
-    .skip(skip)
-    .limit(limit);
+    // .skip(skip)
+    // .limit(limit);
 };
 
 export default {
