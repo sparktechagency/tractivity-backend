@@ -226,6 +226,7 @@ const searchOrganizer = async (req: Request, res: Response) => {
             !addedOrganizerIds.has(user._id.toString()) // check uniqueness
           ) {
             organizers.push({
+              _id: user._id,
               image: user.image,
               fullName: user.fullName,
               profession: user.profession,
