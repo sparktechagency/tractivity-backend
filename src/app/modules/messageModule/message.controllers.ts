@@ -28,7 +28,7 @@ const createMessage = async (req: Request, res: Response) => {
   }
 
   if (conversation.type === 'direct') {
-    if (messageData.sender !== conversation.sender.senderId.toString()) {
+    if (messageData.sender !== conversation.sender.senderId.toString() || messageData.sender !== conversation.receiver.receiverId.toString()) {
       throw new CustomError.BadRequestError('You are not authorized to send a message in this conversation!');
     }
   } else {
