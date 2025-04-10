@@ -45,6 +45,9 @@ const retriveConversationsBySpecificUser = async (userId: string) => {
     },
   ]);
 };
+const retriveConversationsBySpecificUserWithoutPopulate = async (userId: string) => {
+  return await Conversation.find({ $or: [{ 'sender.senderId': userId }, { 'receiver.receiverId': userId }] });
+};
 
 export default {
   createConversation,
@@ -52,4 +55,5 @@ export default {
   retriveConversationByReceiverId,
   retriveConversationByConversationId,
   retriveConversationsBySpecificUser,
+  retriveConversationsBySpecificUserWithoutPopulate
 };

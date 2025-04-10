@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import SocketManager from '../../socket/manager.socket';
 import mongoose from 'mongoose';
 import { IConversation } from './conversation.interface';
+import RoomMembership from '../roomMembershipModule/roomMembership.model';
 // import createNotification from '../../../utils/notificationCreator';
 
 // controller for create new conversation
@@ -108,15 +109,36 @@ const createConversation = async (req: Request, res: Response) => {
 // controller for get all conversation by user (sender/receiver)
 const retriveConversationsBySpecificUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
+
   const conversations = await conversationService.retriveConversationsBySpecificUser(userId);
+
+  let responseConversations: any[] = [];
+
+  await Promise.all(
+    conversations.map(async (conversation: any) => {
+      const convoObj = conversation.toObject?.() || { ...conversation }; // handle Mongoose documents
+
+      if (convoObj.type === 'group') {
+        const usersInRoom = await RoomMembership.find({ roomId: convoObj._id });
+
+        if (usersInRoom.length > 0) {
+          convoObj.conversationMembers = usersInRoom.map((u) => u.userId);
+        }
+      }
+
+      responseConversations.push(convoObj);
+    })
+  );
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
-    message: `Conversations retrive successful!`,
-    data: conversations,
+    message: `Conversations retrieved successfully!`,
+    data: responseConversations,
   });
 };
+
+
 
 export default {
   createConversation,
