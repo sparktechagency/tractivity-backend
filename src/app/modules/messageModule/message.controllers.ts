@@ -40,11 +40,14 @@ const createMessage = async (req: Request, res: Response) => {
       throw new CustomError.BadRequestError('Event not found. You cannot send a message to this group conversation.');
     }
 
-    const isSenderInJoinedVolunteers = event.joinedVolunteer?.some((v) => v.volunteer.toString() === messageData.sender);
+    // const isSenderInJoinedVolunteers = event.joinedVolunteer?.some((v) => v.volunteer.toString() === messageData.sender);
 
-    if (!isSenderInJoinedVolunteers) {
-      throw new CustomError.BadRequestError('You are not authorized to send a message in this group conversation!');
-    }
+    // console.log("...........................", isSenderInJoinedVolunteers)
+    // console.log("envent join members.........", event.joinedVolunteer)
+
+    // if (!isSenderInJoinedVolunteers) {
+    //   throw new CustomError.BadRequestError('You are not authorized to send a message in this group conversation!');
+    // }
   }
 
   if (files && messageData.type !== 'attachment') {
