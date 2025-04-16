@@ -52,6 +52,7 @@ const createMission = async (req: Request, res: Response) => {
         inviterId: missionData.creatorId,
         contentId: mission._id,
         status: 'invited',
+        createdFor: 'organizer',
       };
 
       await Invitation.create(invitationPayload);
@@ -158,6 +159,7 @@ const updateSpecificMission = async (req: Request, res: Response) => {
           inviterId: mission.creator.creatorId,
           contentId: mission._id,
           status: 'invited',
+          createdFor: 'volunteer',
         };
 
         await Invitation.create(invitationPayload);
@@ -336,6 +338,7 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
           inviterId: mission.creator.creatorId,
           contentId: mission._id,
           status: 'invited',
+          createdFor: 'volunteer',
         };
 
         await Invitation.create(invitationPayload);

@@ -1,4 +1,4 @@
-name: CICD Pipeline - Build & Deploy to AWS EC2
+name: CICD Pipeline - Build & Deploy to render
 
 on:
   push:

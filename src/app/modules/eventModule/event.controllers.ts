@@ -140,6 +140,7 @@ const createNewEvent = async (req: Request, res: Response) => {
         inviterId: eventData.creatorId,
         contentId: event._id,
         status: 'invited',
+        createdFor: 'volunteer',
       };
 
       await Invitation.create(invitationPayload);

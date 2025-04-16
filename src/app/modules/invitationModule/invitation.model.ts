@@ -24,7 +24,12 @@ const invitationSchema = new mongoose.Schema(
         type: String,
         enum: ['invited', 'accepted', 'rejected'],
         default: 'invited',
-    }
+    },
+    createdFor: {
+      type: String,
+      enum: ['volunteer', 'organizer'],
+      required: true,
+    },
   },
   {
     timestamps: true,
