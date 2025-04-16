@@ -14,7 +14,7 @@ import missionServices from '../missionModule/mission.services';
 const getOrganizerInvitedMissions = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const organizerInvitedMissions = await Invitation.find({ consumerId: id, status: 'invited' })
+  const organizerInvitedMissions = await Invitation.find({ consumerId: id, status: 'invited', type: 'mission' })
     .populate({
       path: 'contentId',
       select: 'name description creator.creatorRole createdAt',

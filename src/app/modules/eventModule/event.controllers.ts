@@ -128,9 +128,12 @@ const createNewEvent = async (req: Request, res: Response) => {
   await addUserToRoom(eventData.creatorId, eventId);
   socketManager.joinUserToARoom(eventId, eventData.creatorId);
 
+  // console.log("Event body from frontend................",eventData)
+
   //   // create new invitation
   await Promise.all(
     eventData.invitedVolunteer.map(async (vol: (typeof eventData.invitedVolunteer)[0]) => {
+      // console.log("vol inside invitation function.........", vol)
       const invitationPayload = {
         consumerId: vol.volunteer,
         type: 'event',
@@ -140,6 +143,7 @@ const createNewEvent = async (req: Request, res: Response) => {
       };
 
       await Invitation.create(invitationPayload);
+      // console.log(vol, "has sended invitation")
     }),
   );
 
