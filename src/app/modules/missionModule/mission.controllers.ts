@@ -159,7 +159,7 @@ const updateSpecificMission = async (req: Request, res: Response) => {
           inviterId: mission.creator.creatorId,
           contentId: mission._id,
           status: 'invited',
-          createdFor: 'volunteer',
+          createdFor: 'organizer',
         };
 
         await Invitation.create(invitationPayload);

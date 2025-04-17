@@ -34,7 +34,7 @@ const getSpecificMissionsById = async (id: string) => {
 
 // service for get all missions by creator
 const getAllMissionsByCreator = async (id: string) => {
-  return await Mission.find({ 'creator.creatorId': id }).select('_id name description connectedOrganizers mode updatedAt').populate({
+  return await Mission.find({ 'creator.creatorId': id }).select('_id name description connectedOrganizers mode updatedAt connectedOrganizations').populate({
     path: 'connectedOrganizers',
     select: 'fullName',
   });
