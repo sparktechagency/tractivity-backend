@@ -1,6 +1,6 @@
 import CustomError from "../app/errors";
 
-const isFutureDate = (date: string): boolean => {
+const isFutureDate = (date: string | Date): boolean => {
   // Parse the provided date
   const providedDate = new Date(date);
 

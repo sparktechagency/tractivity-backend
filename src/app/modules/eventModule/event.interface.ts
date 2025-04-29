@@ -19,7 +19,8 @@ export interface IEvent extends Document {
   };
   startTime: string;
   endTime: string;
-  date: Date;
+  startDate: Date;
+  endDate: Date;
   mode: string;
   status: string;
   report: {

@@ -221,7 +221,7 @@ const searchOrganizer = async (req: Request, res: Response) => {
 
       if (organization && organization.connectedVolunteers.length > 0) {
         const volunteerPromises = organization.connectedVolunteers.map(async (vol: any) => {
-          const user:any = await userServices.getSpecificUser(vol);
+          const user: any = await userServices.getSpecificUser(vol);
           if (
             user &&
             user.roles.includes('organizer') &&
@@ -239,7 +239,7 @@ const searchOrganizer = async (req: Request, res: Response) => {
 
         await Promise.all(volunteerPromises);
       }
-    })
+    }),
   );
 
   sendResponse(res, {
@@ -326,12 +326,26 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
   if (!mission) {
     throw new CustomError.NotFoundError('Invalid mission id!');
   }
-
+  console.log('mission..........', mission);
   // first check the volunteer is already invited to the mission. only unique volunteers should be invited
   let requestedVolunteers: any[] = [];
   await Promise.all(
     volunteers.map(async (volunteer: string) => {
-      if (mission.requestedVolunteers.length > 0 && mission.requestedVolunteers.find((v: any) => v.toString() !== volunteer)) {
+      if (mission.requestedVolunteers.length > 0) {
+        if (mission.requestedVolunteers.find((v: any) => v.toString() !== volunteer)) {
+          // create invitation for volunteer
+          const invitationPayload = {
+            consumerId: volunteer,
+            type: 'mission',
+            inviterId: mission.creator.creatorId,
+            contentId: mission._id,
+            status: 'invited',
+            createdFor: 'volunteer',
+          };
+
+          const aaa = await Invitation.create(invitationPayload);
+        }
+      } else {
         // create invitation for volunteer
         const invitationPayload = {
           consumerId: volunteer,
@@ -342,8 +356,9 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
           createdFor: 'volunteer',
         };
 
-        await Invitation.create(invitationPayload);
+        const aaa = await Invitation.create(invitationPayload);
       }
+
       requestedVolunteers.push(volunteer);
     }),
   );

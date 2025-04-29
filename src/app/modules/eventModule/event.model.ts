@@ -34,7 +34,8 @@ const eventSchema = new mongoose.Schema<IEvent>(
     },
     startTime: String,
     endTime: String,
-    date: Date,
+    startDate: Date,
+    endDate: Date,
     mode: {
       type: String,
       enum: {

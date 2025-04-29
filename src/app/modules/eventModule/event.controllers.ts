@@ -22,12 +22,36 @@ const createNewEvent = async (req: Request, res: Response) => {
   const eventData = req.body;
   const files = req.files;
 
-  const isDateInFuture = dateChacker.isFutureDate(eventData.date);
+  // Step 1: Date Validation Rules
+  const { startDate, endDate } = eventData;
 
-  if (!isDateInFuture) {
-    throw new CustomError.BadRequestError('Event date cannot be in the past. Please select a valid future date!');
+  if (!startDate && !endDate) {
+    throw new CustomError.BadRequestError('You must provide at least startDate or both startDate and endDate!');
   }
 
+  if (!startDate && endDate) {
+    throw new CustomError.BadRequestError('You cannot provide endDate without startDate!');
+  }
+
+  if (startDate) {
+    const start = new Date(startDate);
+    eventData.startDate = start;
+
+    if (!dateChacker.isFutureDate(start)) {
+      throw new CustomError.BadRequestError('Start date must be in the future!');
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      eventData.endDate = end;
+
+      if (end < start) {
+        throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
+      }
+    }
+  }
+
+  // Step 2: Parse invitedVolunteer JSON
   if (eventData.invitedVolunteer) {
     eventData.invitedVolunteer = JSON.parse(eventData.invitedVolunteer);
   }
@@ -36,66 +60,50 @@ const createNewEvent = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('You must invite at least one volunteer to the event!');
   }
 
+  // Step 3: Validate creator
   const creator: any = await userServices.getSpecificUser(eventData.creatorId);
   if (!creator) {
     throw new CustomError.BadRequestError('No creator found by the creatorId!');
   }
 
-  // check the creator has administrator permission
   if (!creator.roles.includes('organizer')) {
     throw new CustomError.BadRequestError('Creator does not have organizer permission!');
   }
 
+  // Step 4: Validate mission
   const mission = await missionServices.getSpecificMissionsById(eventData.missionId);
   if (!mission) {
-    throw new CustomError.BadRequestError("Mission dosen't exist. You can't create event under the mission!");
+    throw new CustomError.BadRequestError("Mission doesn't exist. You can't create event under the mission!");
   }
 
-  // check the mission is active
   if (mission.status !== 'active') {
-    throw new CustomError.BadRequestError('Mission is not active. You can not create event under the mission!');
+    throw new CustomError.BadRequestError('Mission is not active. You cannot create an event under this mission!');
   }
 
-  // check the creator is member of mission.connectedOrganizers
-  if (!mission.connectedOrganizers.find((org: any) => org._id.toString() === creator._id.toString())) {
-    throw new CustomError.BadRequestError('Creator dose not have access to create event!');
+  const isCreatorInOrganizers = mission.connectedOrganizers.find((org: any) => org._id.toString() === creator._id.toString());
+
+  if (!isCreatorInOrganizers) {
+    throw new CustomError.BadRequestError('Creator does not have access to create event!');
   }
 
+  // Step 5: File uploads
   if (files && files.images) {
-    const eventImagePaths = await fileUploader(files as FileArray, `event-image`, 'images');
-    if (Array.isArray(eventImagePaths)) {
-      eventData.images = eventImagePaths;
-    } else {
-      eventData.images = [eventImagePaths];
-    }
+    const eventImagePaths = await fileUploader(files as FileArray, 'event-image', 'images');
+    eventData.images = Array.isArray(eventImagePaths) ? eventImagePaths : [eventImagePaths];
   }
 
   if (files && files.documents) {
-    const eventDocumentPaths = await fileUploader(files as FileArray, `event-document`, 'documents');
-    if (Array.isArray(eventDocumentPaths)) {
-      eventData.documents = eventDocumentPaths;
-    } else {
-      eventData.documents = [eventDocumentPaths];
-    }
+    const eventDocumentPaths = await fileUploader(files as FileArray, 'event-document', 'documents');
+    eventData.documents = Array.isArray(eventDocumentPaths) ? eventDocumentPaths : [eventDocumentPaths];
   }
 
+  // Step 6: Set event metadata
   eventData.creator = {
     creatorId: eventData.creatorId,
     name: creator.fullName,
     creatorRole: 'organizer',
     isActive: true,
   };
-
-  // move organizer from requestedOrganizer to connectedOrganizer list
-  // const organizerFromRequestedOrganizerList = mission.requestedOrganizers.find((reqO) => reqO.toString() === eventData.creatorId);
-  // const organizerFromConnectedOrganizerList = mission.connectedOrganizers.find((conO) => conO.toString() === eventData.creatorId);
-  // if (organizerFromRequestedOrganizerList || organizerFromConnectedOrganizerList) {
-  //   mission.connectedOrganizers.push(organizerFromRequestedOrganizerList as string);
-  //   mission.requestedOrganizers = mission.requestedOrganizers.filter((reqO) => reqO.toString() !== eventData.creatorId);
-  //   await mission.save();
-  // } else {
-  //   throw new CustomError.BadRequestError('The organizer is not invited of mission to creating event!');
-  // }
 
   eventData.cords = {
     lat: Number(eventData.latitude),
@@ -108,32 +116,18 @@ const createNewEvent = async (req: Request, res: Response) => {
     zip: eventData.zip,
   };
 
-  // eventData.joinedVolunteer = [...mission.connectedVolunteers];
-
+  // Step 7: Create Event
   const event = await eventServices.createEvent(eventData);
 
-
-  // Add creator to event conversation
-  // const creatorEntry = {
-  //   volunteer: eventData.creatorId as Types.ObjectId,
-  //   workStatus: 'organizing',
-  // };
-
-  // event.joinedVolunteer.push(creatorEntry);
-  // await event.save();
-
-  // Join creator to event chat
+  // Step 8: Join creator to socket/chat room
   const socketManager = SocketManager.getInstance();
   const eventId = event._id!.toString();
   await addUserToRoom(eventData.creatorId, eventId);
   socketManager.joinUserToARoom(eventId, eventData.creatorId);
 
-  // console.log("Event body from frontend................",eventData)
-
-  //   // create new invitation
+  // Step 9: Send Invitations
   await Promise.all(
     eventData.invitedVolunteer.map(async (vol: (typeof eventData.invitedVolunteer)[0]) => {
-      // console.log("vol inside invitation function.........", vol)
       const invitationPayload = {
         consumerId: vol.volunteer,
         type: 'event',
@@ -142,22 +136,15 @@ const createNewEvent = async (req: Request, res: Response) => {
         status: 'invited',
         createdFor: 'volunteer',
       };
-
       await Invitation.create(invitationPayload);
-      // console.log(vol, "has sended invitation")
     }),
   );
 
-  // const invitation = await invitationServices.retriveInvitationByConsumerId(eventData.creatorId);
-  // if (invitation) {
-  //   invitation.status = 'accepted';
-  //   await invitation.save();
-  // }
-
+  // Step 10: Final Response
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     status: 'success',
-    message: 'Event creation successfull',
+    message: 'Event creation successful',
     data: event,
   });
 };
