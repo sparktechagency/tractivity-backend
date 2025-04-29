@@ -10,9 +10,10 @@ import { FileArray } from 'express-fileupload';
 import Attachment from '../attachmentModule/attachment.model';
 // import createNotification from '../../../utils/notificationCreator';
 import conversationService from '../conversationModule/conversation.service';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import eventServices from '../eventModule/event.services';
 import SocketManager from '../../socket/manager.socket';
+import userServices from '../userModule/user.services';
 
 const createMessage = async (req: Request, res: Response) => {
   const messageData = req.body;
@@ -39,6 +40,23 @@ const createMessage = async (req: Request, res: Response) => {
     if (!event) {
       throw new CustomError.BadRequestError('Event not found. You cannot send a message to this group conversation.');
     }
+
+    // const messageSenderInconversationAsSender = await conversationService.retriveConversationBySenderAndConversationId(messageData.sender, messageData.conversation);
+    // if (!messageSenderInconversationAsSender) {
+    //   const senderUser = await userServices.getSpecificUser(messageData.sender);
+    //   const newConversationData = {
+    //     sender: { senderId: messageData.sender, name: senderUser.fullName },
+    //     receiver: { receiverId: event._id as unknown as string, name: event.name },
+    //     type: 'group',
+    //     _id: new mongoose.Types.ObjectId(event._id as unknown as string),
+    //   };
+
+    //   console.log(newConversationData)
+    //   const conversation = await conversationService.createConversation(newConversationData);
+    //   if (!conversation) {
+    //     throw new CustomError.BadRequestError('Failed to create group conversation for the sender!');
+    //   }
+    // }
 
     // const isSenderInJoinedVolunteers = event.joinedVolunteer?.some((v) => v.volunteer.toString() === messageData.sender);
 

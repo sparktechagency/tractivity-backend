@@ -117,6 +117,7 @@ const retriveConversationsBySpecificUser = async (req: Request, res: Response) =
   await Promise.all(
     conversations.map(async (conversation: any) => {
       const convoObj = conversation.toObject?.() || { ...conversation }; // handle Mongoose documents
+      // console.log(convoObj)
 
       if (convoObj.type === 'group') {
         const usersInRoom = await RoomMembership.find({ roomId: convoObj._id });
@@ -126,6 +127,7 @@ const retriveConversationsBySpecificUser = async (req: Request, res: Response) =
         }
       }
 
+      // console.log(convoObj)
       responseConversations.push(convoObj);
     })
   );
