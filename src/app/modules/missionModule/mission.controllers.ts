@@ -328,6 +328,7 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
   }
 
   // first check the volunteer is already invited to the mission. only unique volunteers should be invited
+  let requestedVolunteers: any[] = [];
   await Promise.all(
     volunteers.map(async (volunteer: string) => {
       if (mission.requestedVolunteers.length > 0 && mission.requestedVolunteers.find((v: any) => v.toString() !== volunteer)) {
@@ -342,14 +343,13 @@ const inviteVolunteersToMission = async (req: Request, res: Response) => {
         };
 
         await Invitation.create(invitationPayload);
-
-        mission.requestedVolunteers.push(...volunteers);
-        console.log(mission);
       }
-      mission.requestedVolunteers.push(...volunteers);
-      await mission.save();
+      requestedVolunteers.push(volunteer);
     }),
   );
+
+  mission.requestedVolunteers.push(...requestedVolunteers);
+  await mission.save();
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
