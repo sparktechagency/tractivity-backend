@@ -1,3 +1,4 @@
+import Organization from '../organizationModule/organization.model';
 import User from '../userModule/user.model';
 import { IFriendship } from './friendship.interface';
 import Friendship from './friendship.model';
@@ -75,32 +76,69 @@ const acceptFriendship = async (friendshipId: string) => {
 };
 
 // service for retrive organic user for invite friendship
-const retriveOrganicUsersForInviteFriendship = async (userId: string, searchQuery?: string, skip?: number, limit?: number) => {
-  // Step 1: Find all friendships involving the current user with a 'pending' status
+const retriveOrganicUsersForInviteFriendship = async (
+  userId: string,
+  searchQuery?: string,
+  skip: number = 0,
+  limit: number = 10
+) => {
+  // Step 1: Find organizations where the user is creator or connected volunteer
+  const relatedOrganizations = await Organization.find({
+    $or: [
+      { 'creator.creatorId': userId },
+      { connectedVolunteers: userId },
+    ],
+  });
+
+  // Step 2: Get all connected user IDs from these organizations (excluding the current user)
+  const connectedUserIds = new Set<string>();
+
+  for (const org of relatedOrganizations) {
+    if (org.creator?.creatorId?.toString() !== userId) {
+      connectedUserIds.add(org.creator.creatorId.toString());
+    }
+
+    org.connectedVolunteers.forEach((volunteerId: any) => {
+      if (volunteerId.toString() !== userId) {
+        connectedUserIds.add(volunteerId.toString());
+      }
+    });
+  }
+
+  // Step 3: Find existing friendships (pending or accepted) involving current user
   const existingFriendships = await Friendship.find({
-    $or: [{ 'requester.requesterId': userId }, { 'responder.responderId': userId }],
+    $or: [
+      { 'requester.requesterId': userId },
+      { 'responder.responderId': userId },
+    ],
     status: { $in: ['pending', 'accepted'] },
   });
 
-  // Step 2: Collect IDs of users who are already part of a pending friendship
+  // Step 4: Exclude users already in a pending or accepted friendship
   const excludedUserIds = new Set(
-    existingFriendships.flatMap((friendship) => [friendship.requester.requesterId.toString(), friendship.responder.responderId.toString()]),
+    existingFriendships.flatMap((f) => [
+      f.requester.requesterId.toString(),
+      f.responder.responderId.toString(),
+    ])
   );
 
-  // Step 3: Build the query to retrieve users not in the excludedUserIds
+  // Step 5: Filter only users who are connected in orgs but not yet friends
+  const finalUserIds = [...connectedUserIds].filter(
+    (id) => !excludedUserIds.has(id)
+  );
+
+  // Step 6: Build user query
   const query: any = {
-    _id: { $nin: Array.from(excludedUserIds) }, // Exclude users already in pending friendships
+    _id: { $in: finalUserIds },
   };
 
-  // Step 4: Add text search if searchQuery is provided
   if (searchQuery) {
     query.$text = { $search: searchQuery };
   }
 
-  // Step 5: Fetch users
   const users = await User.find(query)
-    .skip(skip as number)
-    .limit(limit as number)
+    .skip(skip)
+    .limit(limit)
     .select('fullName profession image');
 
   return users;
