@@ -56,9 +56,9 @@ const createNewEvent = async (req: Request, res: Response) => {
     eventData.invitedVolunteer = JSON.parse(eventData.invitedVolunteer);
   }
 
-  if (!eventData.invitedVolunteer || eventData.invitedVolunteer.length === 0) {
-    throw new CustomError.BadRequestError('You must invite at least one volunteer to the event!');
-  }
+  // if (!eventData.invitedVolunteer || eventData.invitedVolunteer.length === 0) {
+  //   throw new CustomError.BadRequestError('You must invite at least one volunteer to the event!');
+  // }
 
   // Step 3: Validate creator
   const creator: any = await userServices.getSpecificUser(eventData.creatorId);
