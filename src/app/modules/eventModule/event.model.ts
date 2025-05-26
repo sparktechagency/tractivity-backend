@@ -28,6 +28,7 @@ const eventSchema = new mongoose.Schema<IEvent>(
       city: String,
       zip: String,
     },
+    fullAddress: String,
     cords: {
       lat: Number,
       lng: Number,

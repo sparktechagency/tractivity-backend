@@ -32,6 +32,9 @@ const createOrganization = async (req: Request, res: Response) => {
     throw new CustomError.BadRequestError('Failed to create organization!');
   }
 
+  organization.connectedVolunteers.push(organizationData.creatorId);
+  await organization.save();
+
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     status: 'success',
@@ -190,9 +193,9 @@ const joinOrganizations = async (req: Request, res: Response) => {
       await Organization.findByIdAndUpdate(
         orgId,
         { $addToSet: { connectedVolunteers: volunteerId } }, // Ensures unique addition
-        { new: true }
+        { new: true },
       );
-    })
+    }),
   );
 
   sendResponse(res, {
@@ -201,7 +204,6 @@ const joinOrganizations = async (req: Request, res: Response) => {
     message: 'Volunteer joined organizations successfully',
   });
 };
-
 
 export default {
   createOrganization,

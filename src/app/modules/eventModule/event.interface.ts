@@ -17,6 +17,7 @@ export interface IEvent extends Document {
     city: string;
     zip: string;
   };
+  fullAddress: string;
   startTime: string;
   endTime: string;
   startDate: Date;

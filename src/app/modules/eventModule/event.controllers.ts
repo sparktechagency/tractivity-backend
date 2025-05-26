@@ -16,11 +16,14 @@ import User from '../userModule/user.model';
 import { Types } from 'mongoose';
 import SocketManager from '../../socket/manager.socket';
 import { addUserToRoom } from '../roomMembershipModule/roomMembership.utils';
+import fileRemover from '../../../utils/fileRemover';
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
   const eventData = req.body;
   const files = req.files;
+
+  // console.log(eventData)
 
   // Step 1: Date Validation Rules
   const { startDate, endDate } = eventData;
@@ -49,6 +52,12 @@ const createNewEvent = async (req: Request, res: Response) => {
         throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
       }
     }
+  }
+
+  // set default startTime and endTime from start 0 to end 23:59. need to format am pm
+  if (eventData.startDate) {
+    eventData.startTime = eventData.startTime ? eventData.startTime : new Date(eventData.startDate).setHours(0, 0, 0, 0);
+    eventData.endTime = eventData.endTime ? eventData.endTime : new Date(eventData.startDate).setHours(23, 59, 59, 999);
   }
 
   // Step 2: Parse invitedVolunteer JSON
@@ -116,6 +125,10 @@ const createNewEvent = async (req: Request, res: Response) => {
     zip: eventData.zip,
   };
 
+  // mission connectedVolunteers will automatically join the event joinvolunteers
+  eventData.joinVolunteer = mission.connectedVolunteers.map((vol: any) => vol.volunteer);
+  console.log(eventData.joinVolunteer);
+
   // Step 7: Create Event
   const event = await eventServices.createEvent(eventData);
 
@@ -149,6 +162,184 @@ const createNewEvent = async (req: Request, res: Response) => {
   });
 };
 
+// controller for edit event
+export const editEvent = async (req: Request, res: Response) => {
+  const eventId = req.params.id;
+  const updateData = req.body;
+  const files = req.files;
+
+  const existingEvent = await eventServices.retriveSpecificEventByIdWithoutVolunteerPopulation(eventId);
+  if (!existingEvent) {
+    throw new CustomError.NotFoundError('Event not found!');
+  }
+
+  // === Parse & Validate Dates ===
+  if (updateData.startDate) {
+    const start = new Date(updateData.startDate);
+    if (isNaN(start.getTime()) || !dateChacker.isFutureDate(start)) {
+      throw new CustomError.BadRequestError('Start date must be a valid future date!');
+    }
+    updateData.startDate = start;
+
+    if (updateData.endDate) {
+      const end = new Date(updateData.endDate);
+      if (end < start) {
+        throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
+      }
+      updateData.endDate = end;
+    }
+  }
+
+  // Set default times if not provided
+  if (updateData.startDate) {
+    updateData.startTime = updateData.startTime || new Date(updateData.startDate).setHours(0, 0, 0, 0);
+    updateData.endTime = updateData.endTime || new Date(updateData.startDate).setHours(23, 59, 59, 999);
+  }
+
+  // === Parse JSON fields ===
+  if (typeof updateData.invitedVolunteer === 'string') {
+    updateData.invitedVolunteer = JSON.parse(updateData.invitedVolunteer);
+  }
+  if (typeof updateData.removeImages === 'string') {
+    updateData.removeImages = JSON.parse(updateData.removeImages);
+  }
+  if (typeof updateData.removeDocuments === 'string') {
+    updateData.removeDocuments = JSON.parse(updateData.removeDocuments);
+  }
+  if (typeof updateData.removeJoinedVolunteers === 'string') {
+    updateData.removeJoinedVolunteers = JSON.parse(updateData.removeJoinedVolunteers);
+  }
+  if (typeof updateData.removeInvitedVolunteers === 'string') {
+    updateData.removeInvitedVolunteers = JSON.parse(updateData.removeInvitedVolunteers);
+  }
+  if (typeof updateData.changeJoinedVolunteersRole === 'string') {
+    updateData.changeJoinedVolunteersRole = JSON.parse(updateData.changeJoinedVolunteersRole);
+  }
+  if (typeof updateData.changeInvitedVolunteersRole === 'string') {
+    updateData.changeInvitedVolunteersRole = JSON.parse(updateData.changeInvitedVolunteersRole);
+  }
+
+  // === Handle File Removal ===
+  if (updateData.removeImages && updateData.removeImages.length > 0) {
+    await fileRemover(updateData.removeImages);
+    existingEvent.images = existingEvent.images.filter((img: string) => !updateData.removeImages.includes(img));
+  }
+
+  if (updateData.removeDocuments && updateData.removeDocuments.length > 0) {
+    await fileRemover(updateData.removeDocuments);
+    existingEvent.documents = existingEvent.documents.filter((doc: string) => !updateData.removeDocuments.includes(doc));
+  }
+
+  // === Handle New File Uploads ===
+  if (files && files.images) {
+    const newImagePaths = await fileUploader(files as FileArray, 'event-image', 'images');
+    existingEvent.images.push(...(Array.isArray(newImagePaths) ? newImagePaths : [newImagePaths]));
+  }
+
+  if (files && files.documents) {
+    const newDocPaths = await fileUploader(files as FileArray, 'event-document', 'documents');
+    existingEvent.documents.push(...(Array.isArray(newDocPaths) ? newDocPaths : [newDocPaths]));
+  }
+
+  // === Handle Invited Volunteer Additions or Role Updates ===
+  if (updateData.invitedVolunteer) {
+    for (const vol of updateData.invitedVolunteer) {
+      const existingVolIndex = existingEvent.invitedVolunteer.findIndex((v: any) => v.volunteer.toString() === vol.volunteer.toString());
+      if (existingVolIndex === -1) {
+        // Add new invited volunteer
+        existingEvent.invitedVolunteer.push(vol);
+        await Invitation.create({
+          consumerId: vol.volunteer,
+          type: 'event',
+          inviterId: existingEvent.creator.creatorId,
+          contentId: eventId,
+          status: 'invited',
+          createdFor: 'volunteer',
+        });
+      } else {
+        // Update role if it changed
+        existingEvent.invitedVolunteer[existingVolIndex].workTitle = vol.workTitle;
+      }
+    }
+  }
+
+  // === Handle Joined Volunteer Role Updates ===
+  if (updateData.changeJoinedVolunteersRole && Array.isArray(updateData.changeJoinedVolunteersRole)) {
+    for (const vol of updateData.changeJoinedVolunteersRole) {
+      const existingJoinedIndex = existingEvent.joinedVolunteer.findIndex((v: any) => v.volunteer.toString() === vol.volunteer.toString());
+      if (existingJoinedIndex !== -1) {
+        // Update role
+        existingEvent.joinedVolunteer[existingJoinedIndex].workTitle = vol.workTitle;
+      }
+    }
+  }
+
+  // === Handle Invited Volunteer Role Updates ===
+  if (updateData.changeInvitedVolunteersRole && Array.isArray(updateData.changeInvitedVolunteersRole)) {
+    for (const vol of updateData.changeInvitedVolunteersRole) {
+      const existingInvitedIndex = existingEvent.invitedVolunteer.findIndex((v: any) => v.volunteer.toString() === vol.volunteer.toString());
+      if (existingInvitedIndex !== -1) {
+        // Update role
+        existingEvent.invitedVolunteer[existingInvitedIndex].workTitle = vol.workTitle;
+      }
+    }
+  }
+
+  // === Handle joined Volunteer Removal ===
+  if (updateData.removeJoinedVolunteers && updateData.removeJoinedVolunteers.length > 0) {
+    existingEvent.joinedVolunteer = existingEvent.joinedVolunteer.filter(
+      (v: any) => !updateData.removeJoinedVolunteers.includes(v.volunteer.toString()),
+    );
+    await Promise.all(
+      updateData.removeJoinedVolunteers.map((vol: string) =>
+        Invitation.deleteOne({ type: 'event', status: 'accepted', contentId: eventId, consumerId: vol }),
+      ),
+    );
+  }
+
+  // === Handle invited Volunteer Removal ===
+  if (updateData.removeInvitedVolunteers && updateData.removeInvitedVolunteers.length > 0) {
+    existingEvent.invitedVolunteer = existingEvent.invitedVolunteer.filter(
+      (v: any) => !updateData.removeInvitedVolunteers.includes(v.volunteer.toString()),
+    );
+    await Promise.all(
+      updateData.removeInvitedVolunteers.map((vol: string) =>
+        Invitation.deleteOne({ type: 'event', status: 'invited', contentId: eventId, consumerId: vol }),
+      ),
+    );
+  }
+
+  // === Location and Address Update ===
+  if (updateData.latitude && updateData.longitude) {
+    existingEvent.cords = {
+      lat: Number(updateData.latitude),
+      lng: Number(updateData.longitude),
+    };
+  }
+
+  if (updateData.state || updateData.city || updateData.zip) {
+    existingEvent.address = {
+      state: updateData.state,
+      city: updateData.city,
+      zip: updateData.zip,
+    };
+  }
+
+  // console.log(existingEvent.invitedVolunteer)
+
+  // === Final Merge and Save ===
+  Object.assign(existingEvent, updateData);
+  const updatedEvent = await existingEvent.save();
+
+  // === Final Response ===
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Event updated successfully!',
+    data: updatedEvent,
+  });
+};
+
 // controller for search volunteers
 const searchVolunteers = async (req: Request, res: Response) => {
   const { missionId } = req.params;
@@ -170,10 +361,8 @@ const searchVolunteers = async (req: Request, res: Response) => {
   );
 
   // Remove mission's connectedVolunteers from the volunteers array
-  const connectedVolunteersSet = new Set(mission.connectedVolunteers.map((v: any) => v.toString()));
+  const connectedVolunteersSet = new Set(mission.connectedVolunteers.map((v: any) => v._id.toString()));
   volunteers = volunteers.filter((volunteer: any) => !connectedVolunteersSet.has(volunteer.toString()));
-
-  // console.log(volunteers);
 
   let volunteersWithDetails: any = [];
   if (volunteers.length > 0) {
@@ -567,6 +756,7 @@ const retriveAllEvents = async (req: Request, res: Response) => {
 
 export default {
   createNewEvent,
+  editEvent,
   searchVolunteers,
   retriveEventsByOrganizer,
   deleteSpecificEvent,
