@@ -17,6 +17,7 @@ import conversationRouter from '../modules/conversationModule/conversations.rout
 import messageRouter from '../modules/messageModule/message.routes';
 import attachmentRouter from '../modules/attachmentModule/attachment.routes';
 import dashboardRouter from '../modules/dashboardMatrix/dashboardMatrix.routes';
+import scheduleRouter from '../modules/scheduleModule/schedule.routers';
 
 const routersVersionOne = express.Router();
 
@@ -38,5 +39,6 @@ routersVersionOne.use('/attachment', attachmentRouter)
 routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 routersVersionOne.use('/dashboard', dashboardRouter);
+routersVersionOne.use('/schedule', scheduleRouter);
 
 export default routersVersionOne;
