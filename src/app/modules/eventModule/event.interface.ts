@@ -54,4 +54,19 @@ export interface IEvent extends Document {
     totalWorkedHour: number;
     mileage: number;
   }[];
+  isCustomDate: boolean;
+  schedule: Types.ObjectId;
+  eventDates: {
+    date: Date;
+    dayName: string;
+    innerTime: {
+      startTime: string;
+      endTime: string;
+      isAllDay: boolean;
+    };
+    repeatOn: string[];
+    endType: string;
+    endOn: Date;
+    endCycle: number;
+  }[];
 }
