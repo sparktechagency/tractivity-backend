@@ -6,11 +6,15 @@ const createSchedule = async (data: Partial<ISchedule>) => {
   return await Schedule.create(data);
 };
 
-const retrieveScheduleByOrganizer = async (organizerId: string) => {
+const retrieveSchedulesByOrganizer = async (organizerId: string) => {
   return await Schedule.find({ organizer: organizerId });
+};
+
+const updateScheduleStatus = async (scheduleId: string, status: string) => {
+  return await Schedule.findByIdAndUpdate(scheduleId, { isActive: status });
 };
 
 export default {
   createSchedule,
-  retrieveScheduleByOrganizer,
+  retrieveSchedulesByOrganizer,
 };
