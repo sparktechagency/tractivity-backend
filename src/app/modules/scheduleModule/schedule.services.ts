@@ -10,11 +10,17 @@ const retrieveSchedulesByOrganizer = async (organizerId: string) => {
   return await Schedule.find({ organizer: organizerId });
 };
 
-const updateScheduleStatus = async (scheduleId: string, status: string) => {
-  return await Schedule.findByIdAndUpdate(scheduleId, { isActive: status });
+const updateSpecificSchedule = async (scheduleId: string, data: Partial<ISchedule>) => {
+  return await Schedule.findByIdAndUpdate(scheduleId, data);
+};
+
+const retrieveSpecificSchedule = async (scheduleId: string) => {
+  return await Schedule.findById(scheduleId);
 };
 
 export default {
   createSchedule,
   retrieveSchedulesByOrganizer,
+  updateSpecificSchedule,
+  retrieveSpecificSchedule,
 };

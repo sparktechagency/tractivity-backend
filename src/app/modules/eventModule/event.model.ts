@@ -132,6 +132,56 @@ const eventSchema = new mongoose.Schema<IEvent>(
         },
       },
     ],
+    isCustomDate: {
+      type: Boolean,
+      default: false,
+    },
+    schedule: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'schedule',
+    },
+    eventDates: [
+      {
+        date: Date,
+        dayName: String,
+        innerTime: {
+          startTime: {
+            type: String,
+            trim: true,
+            default: '00:00',
+          },
+          endTime: {
+            type: String,
+            trim: true,
+            default: '00:00',
+          },
+          isAllDay: {
+            type: Boolean,
+            default: false,
+          },
+        },
+        repeatOn: [
+          {
+            type: String,
+            enum: ['no-repeat', 'weekly-on-day', 'monthly-on-date'],
+            default: 'no-repeat',
+          },
+        ],
+        endType: {
+          type: String,
+          enum: ['never', 'onDate', 'onCycle'],
+          default: 'never',
+        },
+        endOn: {
+          type: Date,
+          default: null,
+        },
+        endCycle: {
+          type: Number,
+          default: null,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

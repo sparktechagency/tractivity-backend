@@ -10,7 +10,7 @@ import getDayNameFromDate from '../../../utils/getDayFromDate';
 const createSchedule = async (req: Request, res: Response) => {
   const scheduleData = req.body;
 
-  if(scheduleData.dates.length === 0){
+  if (scheduleData.dates.length === 0) {
     throw new CustomError.BadRequestError('At least one date is required in the schedule!');
   }
 
@@ -83,37 +83,77 @@ const updateScheduleStatus = async (req: Request, res: Response) => {
 const updateSpecificSchedule = async (req: Request, res: Response) => {
   const scheduleId = req.params.scheduleId;
 
-  // Validate scheduleId
   if (!scheduleId || !isValidObjectId(scheduleId)) {
     throw new CustomError.BadRequestError('Valid schedule ObjectId is required!');
   }
 
   const updateData = req.body;
 
-  // Validate and normalize dates if present
+  // Validate organizer if present
+  if (updateData.organizer && !isValidObjectId(updateData.organizer)) {
+    throw new CustomError.BadRequestError('Valid organizer ObjectId is required!');
+  }
+
+  // Validate globalTime fields if isGlobalTime is true
+  if (updateData.isGlobalTime === true) {
+    const global = updateData.globalTime;
+
+    if (!global) {
+      throw new CustomError.BadRequestError('globalTime must be provided when isGlobalTime is true');
+    }
+
+    if (global.isAllDay === false) {
+      if (
+        !global.startTime ||
+        !global.endTime ||
+        typeof global.startTime !== 'string' ||
+        typeof global.endTime !== 'string'
+      ) {
+        throw new CustomError.BadRequestError('globalTime.startTime and endTime must be provided when isAllDay is false');
+      }
+    }
+  }
+
+  // Validate and normalize dates
   if (updateData.dates) {
     if (!Array.isArray(updateData.dates)) {
       throw new CustomError.BadRequestError('Dates must be an array!');
     }
 
     if (updateData.dates.length === 0) {
-      throw new CustomError.BadRequestError('At least one date is required in the schedule!');
+      throw new CustomError.BadRequestError('At least one date is required!');
     }
 
-    updateData.dates = updateData.dates.map((item: any) => {
+    updateData.dates = updateData.dates.map((item: any, index: number) => {
       if (!item.dayName && item.date) {
         item.dayName = getDayNameFromDate(item.date);
       }
+
+      // Validate endType rules
+      if (item.endType === 'onDate' && !item.endOn) {
+        throw new CustomError.BadRequestError(`'endOn' is required when endType is 'onDate' at index ${index}`);
+      }
+
+      if (item.endType === 'onCycle' && (item.endCycle === null || item.endCycle === undefined)) {
+        throw new CustomError.BadRequestError(`'endCycle' is required when endType is 'onCycle' at index ${index}`);
+      }
+
+      // Validate innerTime if isGlobalTime is false
+      if (updateData.isGlobalTime === false && item.innerTime.isAllDay === false) {
+        const inner = item.innerTime;
+        if (
+          !inner ||
+          typeof inner.startTime !== 'string' ||
+          typeof inner.endTime !== 'string'
+        ) {
+          throw new CustomError.BadRequestError(`innerTime with startTime and endTime is required when isGlobalTime is false (at index ${index})`);
+        }
+      }
+
       return item;
     });
   }
 
-  // Validate organizer if present
-  if (updateData.organizer && !isValidObjectId(updateData.organizer)) {
-    throw new CustomError.BadRequestError('Valid organizer ObjectId is required!');
-  }
-
-  // Perform the update with validation and return the new document
   const updatedSchedule = await Schedule.findByIdAndUpdate(scheduleId, updateData, {
     new: true,
     runValidators: true,
@@ -127,6 +167,7 @@ const updateSpecificSchedule = async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Schedule updated successfully',
+    data: updatedSchedule,
   });
 };
 

@@ -41,6 +41,10 @@ const retriveSpecificEventById = async (id: string) => {
       path: 'joinedVolunteer.volunteer',
       select: 'fullName image profession',
     },
+    {
+      path: 'schedule',
+      select: '-organizer -__v',
+    },
   ]);
 };
 

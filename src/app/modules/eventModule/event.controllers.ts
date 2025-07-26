@@ -17,6 +17,8 @@ import { Types } from 'mongoose';
 import SocketManager from '../../socket/manager.socket';
 import { addUserToRoom } from '../roomMembershipModule/roomMembership.utils';
 import fileRemover from '../../../utils/fileRemover';
+import scheduleServices from '../scheduleModule/schedule.services';
+import getDayNameFromDate from '../../../utils/getDayFromDate';
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
@@ -26,38 +28,101 @@ const createNewEvent = async (req: Request, res: Response) => {
   // console.log(eventData)
 
   // Step 1: Date Validation Rules
-  const { startDate, endDate } = eventData;
+  const { schedule } = eventData;
 
-  if (!startDate && !endDate) {
-    throw new CustomError.BadRequestError('You must provide at least startDate or both startDate and endDate!');
-  }
+  // if (!startDate && !endDate) {
+  //   throw new CustomError.BadRequestError('You must provide at least startDate or both startDate and endDate!');
+  // }
 
-  if (!startDate && endDate) {
-    throw new CustomError.BadRequestError('You cannot provide endDate without startDate!');
-  }
+  // if (!startDate && endDate) {
+  //   throw new CustomError.BadRequestError('You cannot provide endDate without startDate!');
+  // }
 
-  if (startDate) {
-    const start = new Date(startDate);
-    eventData.startDate = start;
+  // if (startDate) {
+  //   const start = new Date(startDate);
+  //   eventData.startDate = start;
 
-    if (!dateChacker.isFutureDate(start)) {
-      throw new CustomError.BadRequestError('Start date must be in the future!');
-    }
+  //   if (!dateChacker.isFutureDate(start)) {
+  //     throw new CustomError.BadRequestError('Start date must be in the future!');
+  //   }
 
-    if (endDate) {
-      const end = new Date(endDate);
-      eventData.endDate = end;
+  //   if (endDate) {
+  //     const end = new Date(endDate);
+  //     eventData.endDate = end;
 
-      if (end < start) {
-        throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
-      }
-    }
-  }
+  //     if (end < start) {
+  //       throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
+  //     }
+  //   }
+  // }
 
   // set default startTime and endTime from start 0 to end 23:59. need to format am pm
-  if (eventData.startDate) {
-    eventData.startTime = eventData.startTime ? eventData.startTime : new Date(eventData.startDate).setHours(0, 0, 0, 0);
-    eventData.endTime = eventData.endTime ? eventData.endTime : new Date(eventData.startDate).setHours(23, 59, 59, 999);
+  // if (eventData.startDate) {
+  //   eventData.startTime = eventData.startTime ? eventData.startTime : new Date(eventData.startDate).setHours(0, 0, 0, 0);
+  //   eventData.endTime = eventData.endTime ? eventData.endTime : new Date(eventData.startDate).setHours(23, 59, 59, 999);
+  // }
+
+  eventData.isCustomDate = eventData.isCustomDate ? eventData.isCustomDate : false;
+
+  if(eventData.isCustomDate){
+    if(!eventData.eventDates){
+      throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
+    }
+  }else{
+    throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+  }
+
+  if(schedule){
+    const existingSchedule = await scheduleServices.retrieveSpecificSchedule(schedule);
+    if(!existingSchedule){
+      throw new CustomError.BadRequestError('Schedule not found!');
+    }
+  }
+
+  if(eventData.eventDates){
+
+    // parse eventDates JSON
+    eventData.eventDates = JSON.parse(eventData.eventDates);
+
+    if (eventData.eventDates.length === 0) {
+      throw new CustomError.BadRequestError('At least one date is required in the schedule!');
+    }
+  
+    if (!Array.isArray(eventData.eventDates)) {
+      throw new CustomError.BadRequestError('Event dates must be an array!');
+    }
+  
+    // Normalize & validate each date entry
+    eventData.eventDates = eventData.eventDates.map((item: any, index: number) => {
+      // Set dayName if missing
+      if (!item.dayName && item.date) {
+        item.dayName = getDayNameFromDate(item.date);
+      }
+
+      // Validate endType rules
+      if (item.endType === 'onDate' && !item.endOn) {
+        throw new CustomError.BadRequestError(`'endOn' is required when endType is 'onDate' at index ${index}`);
+      }
+
+      if (item.endType === 'onCycle' && (item.endCycle === null || item.endCycle === undefined)) {
+        throw new CustomError.BadRequestError(`'endCycle' is required when endType is 'onCycle' at index ${index}`);
+      }
+
+      // Validate innerTime if isGlobalTime is false
+      if (item.innerTime.isAllDay === false) {
+        const inner = item.innerTime;
+        if (
+          !inner ||
+          typeof inner.startTime !== 'string' ||
+          typeof inner.endTime !== 'string'
+        ) {
+          throw new CustomError.BadRequestError(`innerTime with startTime and endTime is required when isGlobalTime is false (at index ${index})`);
+        }
+      }
+  
+      return item;
+    });
+    
   }
 
   // Step 2: Parse invitedVolunteer JSON
@@ -174,26 +239,92 @@ export const editEvent = async (req: Request, res: Response) => {
   }
 
   // === Parse & Validate Dates ===
-  if (updateData.startDate) {
-    const start = new Date(updateData.startDate);
-    if (isNaN(start.getTime()) || !dateChacker.isFutureDate(start)) {
-      throw new CustomError.BadRequestError('Start date must be a valid future date!');
-    }
-    updateData.startDate = start;
+  // if (updateData.startDate) {
+  //   const start = new Date(updateData.startDate);
+  //   if (isNaN(start.getTime()) || !dateChacker.isFutureDate(start)) {
+  //     throw new CustomError.BadRequestError('Start date must be a valid future date!');
+  //   }
+  //   updateData.startDate = start;
 
-    if (updateData.endDate) {
-      const end = new Date(updateData.endDate);
-      if (end < start) {
-        throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
-      }
-      updateData.endDate = end;
+  //   if (updateData.endDate) {
+  //     const end = new Date(updateData.endDate);
+  //     if (end < start) {
+  //       throw new CustomError.BadRequestError('End date cannot be earlier than start date!');
+  //     }
+  //     updateData.endDate = end;
+  //   }
+  // }
+
+  // Set default times if not provided
+  // if (updateData.startDate) {
+  //   updateData.startTime = updateData.startTime || new Date(updateData.startDate).setHours(0, 0, 0, 0);
+  //   updateData.endTime = updateData.endTime || new Date(updateData.startDate).setHours(23, 59, 59, 999);
+  // }
+
+  if(updateData.isCustomDate){
+    if(!updateData.eventDates){
+      throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
+    }
+  }else{
+    throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+  }
+
+  if(schedule){
+    const existingSchedule = await scheduleServices.retrieveSpecificSchedule(schedule);
+    if(!existingSchedule){
+      throw new CustomError.BadRequestError('Schedule not found!');
     }
   }
 
-  // Set default times if not provided
-  if (updateData.startDate) {
-    updateData.startTime = updateData.startTime || new Date(updateData.startDate).setHours(0, 0, 0, 0);
-    updateData.endTime = updateData.endTime || new Date(updateData.startDate).setHours(23, 59, 59, 999);
+  if(eventData.eventDates){
+
+    // parse eventDates JSON
+    eventData.eventDates = JSON.parse(eventData.eventDates);
+
+    if (eventData.eventDates.length === 0) {
+      throw new CustomError.BadRequestError('At least one date is required in the schedule!');
+    }
+  
+    if (!Array.isArray(eventData.eventDates)) {
+      throw new CustomError.BadRequestError('Event dates must be an array!');
+    }
+  
+    // Normalize & validate each date entry
+    eventData.eventDates = eventData.eventDates.map((item: any, index: number) => {
+      // Set dayName if missing
+      if (!item.dayName && item.date) {
+        item.dayName = getDayNameFromDate(item.date);
+      }
+
+      // Validate endType rules
+      if (item.endType === 'onDate' && !item.endOn) {
+        throw new CustomError.BadRequestError(`'endOn' is required when endType is 'onDate' at index ${index}`);
+      }
+
+      if (item.endType === 'onCycle' && (item.endCycle === null || item.endCycle === undefined)) {
+        throw new CustomError.BadRequestError(`'endCycle' is required when endType is 'onCycle' at index ${index}`);
+      }
+
+      // Validate innerTime if isGlobalTime is false
+      if (item.innerTime.isAllDay === false) {
+        const inner = item.innerTime;
+        if (
+          !inner ||
+          typeof inner.startTime !== 'string' ||
+          typeof inner.endTime !== 'string'
+        ) {
+          throw new CustomError.BadRequestError(`innerTime with startTime and endTime is required when isGlobalTime is false (at index ${index})`);
+        }
+      }
+  
+      return item;
+    });
+    
+  }
+
+  // Step 2: Parse invitedVolunteer JSON
+  if (eventData.invitedVolunteer) {
+    eventData.invitedVolunteer = JSON.parse(eventData.invitedVolunteer);
   }
 
   // === Parse JSON fields ===
