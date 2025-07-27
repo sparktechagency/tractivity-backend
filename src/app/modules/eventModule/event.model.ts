@@ -47,7 +47,7 @@ const eventSchema = new mongoose.Schema<IEvent>(
     status: {
       type: String,
       enum: {
-        values: ['running', 'deliveried'],
+        values: ['running', 'deliveried', 'expired'],
         message: '{VALUE} is not accepted. Please use running or deliveried',
       },
       default: 'running',

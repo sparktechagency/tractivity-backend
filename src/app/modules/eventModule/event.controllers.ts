@@ -64,22 +64,22 @@ const createNewEvent = async (req: Request, res: Response) => {
 
   eventData.isCustomDate = eventData.isCustomDate ? eventData.isCustomDate : false;
 
-  if(eventData.isCustomDate){
-    if(!eventData.eventDates){
+  if (eventData.isCustomDate) {
+    if (!eventData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
-  }else{
+  } else {
     throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
   }
 
-  if(schedule){
+  if (schedule) {
     const existingSchedule = await scheduleServices.retrieveSpecificSchedule(schedule);
-    if(!existingSchedule){
+    if (!existingSchedule) {
       throw new CustomError.BadRequestError('Schedule not found!');
     }
   }
 
-  if(eventData.eventDates){
+  if (eventData.eventDates) {
 
     // parse eventDates JSON
     eventData.eventDates = JSON.parse(eventData.eventDates);
@@ -87,11 +87,11 @@ const createNewEvent = async (req: Request, res: Response) => {
     if (eventData.eventDates.length === 0) {
       throw new CustomError.BadRequestError('At least one date is required in the schedule!');
     }
-  
+
     if (!Array.isArray(eventData.eventDates)) {
       throw new CustomError.BadRequestError('Event dates must be an array!');
     }
-  
+
     // Normalize & validate each date entry
     eventData.eventDates = eventData.eventDates.map((item: any, index: number) => {
       // Set dayName if missing
@@ -119,10 +119,10 @@ const createNewEvent = async (req: Request, res: Response) => {
           throw new CustomError.BadRequestError(`innerTime with startTime and endTime is required when isGlobalTime is false (at index ${index})`);
         }
       }
-  
+
       return item;
     });
-    
+
   }
 
   // Step 2: Parse invitedVolunteer JSON
@@ -261,36 +261,38 @@ export const editEvent = async (req: Request, res: Response) => {
   //   updateData.endTime = updateData.endTime || new Date(updateData.startDate).setHours(23, 59, 59, 999);
   // }
 
-  if(updateData.isCustomDate){
-    if(!updateData.eventDates){
+  updateData.isCustomDate = updateData.isCustomDate === 'true';
+
+  if (updateData.isCustomDate) {
+    if (!updateData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
-  }else{
+  } else if (!updateData.schedule) {
     throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
   }
 
-  if(schedule){
-    const existingSchedule = await scheduleServices.retrieveSpecificSchedule(schedule);
-    if(!existingSchedule){
+  if (updateData.schedule) {
+    const existingSchedule = await scheduleServices.retrieveSpecificSchedule(updateData.schedule);
+    if (!existingSchedule) {
       throw new CustomError.BadRequestError('Schedule not found!');
     }
   }
 
-  if(eventData.eventDates){
+  if (updateData.eventDates) {
 
     // parse eventDates JSON
-    eventData.eventDates = JSON.parse(eventData.eventDates);
+    updateData.eventDates = JSON.parse(updateData.eventDates);
 
-    if (eventData.eventDates.length === 0) {
+    if (updateData.eventDates.length === 0) {
       throw new CustomError.BadRequestError('At least one date is required in the schedule!');
     }
-  
-    if (!Array.isArray(eventData.eventDates)) {
+
+    if (!Array.isArray(updateData.eventDates)) {
       throw new CustomError.BadRequestError('Event dates must be an array!');
     }
-  
+
     // Normalize & validate each date entry
-    eventData.eventDates = eventData.eventDates.map((item: any, index: number) => {
+    updateData.eventDates = updateData.eventDates.map((item: any, index: number) => {
       // Set dayName if missing
       if (!item.dayName && item.date) {
         item.dayName = getDayNameFromDate(item.date);
@@ -316,15 +318,15 @@ export const editEvent = async (req: Request, res: Response) => {
           throw new CustomError.BadRequestError(`innerTime with startTime and endTime is required when isGlobalTime is false (at index ${index})`);
         }
       }
-  
+
       return item;
     });
-    
+
   }
 
   // Step 2: Parse invitedVolunteer JSON
-  if (eventData.invitedVolunteer) {
-    eventData.invitedVolunteer = JSON.parse(eventData.invitedVolunteer);
+  if (updateData.invitedVolunteer) {
+    updateData.invitedVolunteer = JSON.parse(updateData.invitedVolunteer);
   }
 
   // === Parse JSON fields ===
@@ -529,11 +531,14 @@ const retriveEventsByOrganizer = async (req: Request, res: Response) => {
   const { status } = req.query;
   const events = await eventServices.retriveEventsByOrganizer(id, status as string);
 
+  // exclude expired events
+  const filteredEvents = events.filter((event: any) => event.status !== 'expired');
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Events retrive successfull',
-    data: events,
+    data: filteredEvents,
   });
 };
 
@@ -599,11 +604,14 @@ const searchEvents = async (req: Request, res: Response) => {
   const { query } = req.query;
   const events = await eventServices.searchEvents(query as string);
 
+  // exclude expired events
+  const filteredEvents = events.filter((event: any) => event.status !== 'expired');
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Event retrive successfull',
-    data: events,
+    data: filteredEvents,
   });
 };
 
@@ -613,11 +621,14 @@ const retriveEventsByVolunteer = async (req: Request, res: Response) => {
   const { query, status, date } = req.query;
   const events = await eventServices.retriveEventsByVolunteer(volunteerId, query as string, status as string, date as string);
 
+  // exclude expired events
+  const filteredEvents = events.filter((event: any) => event.status !== 'expired');
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     status: 'success',
     message: 'Event retrive successfull',
-    data: events,
+    data: filteredEvents,
   });
 };
 
@@ -651,7 +662,10 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
   const skip = (page - 1) * limit;
   const events = await eventServices.retriveAllEventsByMissionId(id, limit, skip);
 
-  const totalEvents = events.length || 0;
+  // exclude expired events
+  const filteredEvents = events.filter((event: any) => event.status !== 'expired');
+
+  const totalEvents = filteredEvents.length || 0;
   const totalPages = Math.ceil(totalEvents / limit);
 
   sendResponse(res, {
@@ -664,7 +678,7 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
       currentPage: page,
       limit: limit,
     },
-    data: events,
+    data: filteredEvents,
   });
 };
 

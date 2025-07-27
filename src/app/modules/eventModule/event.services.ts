@@ -13,7 +13,7 @@ const retriveEventsByOrganizer = async (id: string, status: string) => {
     query.status = status;
   }
 
-  return await Event.find(query);
+  return await Event.find(query).populate('schedule');
 };
 
 // service for retrive specific event by organizer/creator
@@ -62,6 +62,10 @@ const retriveSpecificEventByIdWithoutVolunteerPopulation = async (id: string) =>
         path: 'connectedOrganizers',
         select: 'image fullName',
       },
+      {
+        path: 'schedule',
+        select: '',
+      },
     ],
   });
 };
@@ -90,6 +94,10 @@ const searchEvents = async (searchQuery: string) => {
       {
         path: 'connectedOrganizers',
         select: 'fullName image',
+      },
+      {
+        path: 'schedule',
+        select: '',
       },
     ],
   });
@@ -198,6 +206,10 @@ const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string
         path: 'connectedOrganizers',
         select: 'fullName image',
       },
+      {
+        path: 'schedule',
+        select: '',
+      },
     ],
   });
 };
@@ -253,6 +265,10 @@ const retriveAllEventsByMissionId = async (id: string, limit: number, skip: numb
         path: 'joinedVolunteer.volunteer',
         select: 'fullName image',
       },
+      {
+        path: 'schedule',
+        select: '',
+      },
     ]);
 };
 
@@ -285,6 +301,10 @@ const retriveAllEvents = async (searchQuery: string, status: string, skip: numbe
           path: 'connectedOrganizations',
           select: 'name',
         },
+      },
+      {
+        path: 'schedule',
+        select: '',
       },
     ]);
 };
