@@ -350,6 +350,11 @@ const getAllEventsReportByMission = async (missionId: string, startDate?: Date, 
     ]);
 };
 
+// service for retrieve all events 
+const retriveAllEventsForCronJob = async () => {
+  return await Event.find()
+};
+
 export default {
   createEvent,
   retriveEventsByOrganizer,
@@ -364,4 +369,5 @@ export default {
   deleteSpecificEvent,
   getAllEventsReportByMission,
   getAllEventsReportByVolunteer,
+  retriveAllEventsForCronJob,
 };

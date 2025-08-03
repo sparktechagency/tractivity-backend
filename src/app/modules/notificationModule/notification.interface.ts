@@ -1,11 +1,17 @@
-import { Document, Types } from "mongoose";
+import { Document, Types } from 'mongoose';
 
-export interface INotification extends Document{
-    senderId: Types.ObjectId,
-    isDismissed: boolean,
+export interface INotification extends Document {
+    consumer: Types.ObjectId;
+    type: string; // general, individual
     content: {
-        type: string,
-        message: string,
-        consumerId: string
-    }
+        title: string;
+        message: string;
+        source: {
+            type: string;
+            id: Types.ObjectId;
+        };
+    };
+    isDismissed: boolean;
+    createdAt: Date;
+    updatedAt: Date;
 }
