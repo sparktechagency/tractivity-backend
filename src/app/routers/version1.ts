@@ -18,6 +18,7 @@ import messageRouter from '../modules/messageModule/message.routes';
 import attachmentRouter from '../modules/attachmentModule/attachment.routes';
 import dashboardRouter from '../modules/dashboardMatrix/dashboardMatrix.routes';
 import scheduleRouter from '../modules/scheduleModule/schedule.routers';
+import onboardRouter from '../modules/onboardInvitation/onboard.routes';
 
 const routersVersionOne = express.Router();
 
@@ -40,5 +41,6 @@ routersVersionOne.use('/admin', adminRouter);
 routersVersionOne.use('/admin/auth', adminAuthRouter);
 routersVersionOne.use('/dashboard', dashboardRouter);
 routersVersionOne.use('/schedule', scheduleRouter);
+routersVersionOne.use('/onboard', onboardRouter);
 
 export default routersVersionOne;
