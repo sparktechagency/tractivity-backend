@@ -4,8 +4,13 @@ import { IOnboardInterface } from './onboard.interface';
 const onboardSchema = new mongoose.Schema<IOnboardInterface>(
     {
         email: { type: String, required: true, unique: true },
-        downloadLink: { type: String, required: true },
         method: { type: String, enum: ['email', 'sms'], required: true },
+        events: [
+            {
+                eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'event' },
+                status: { type: String, enum: ['invited', 'accepted', 'rejected'], default: 'invited' },
+            }
+        ]
     },
     {
         timestamps: true,

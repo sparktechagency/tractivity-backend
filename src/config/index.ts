@@ -20,4 +20,7 @@ export default {
   // SMTP credentials
   gmail_app_user: process.env.GMAIL_APP_USER,
   gmail_app_password: process.env.GMAIL_APP_PASSWORD,
+
+  playstore: process.env.PLAYSOTRE,
+  appstore: process.env.APPSTORE,
 };

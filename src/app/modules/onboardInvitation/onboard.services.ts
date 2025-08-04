@@ -2,7 +2,6 @@ import OnboardInvitation from "./onboard.model";
 
 type bodyType = {
     email: string;
-    downloadLink: string;
     method: string;
 } 
 

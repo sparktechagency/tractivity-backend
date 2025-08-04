@@ -19,6 +19,7 @@ import { addUserToRoom } from '../roomMembershipModule/roomMembership.utils';
 import fileRemover from '../../../utils/fileRemover';
 import scheduleServices from '../scheduleModule/schedule.services';
 import getDayNameFromDate from '../../../utils/getDayFromDate';
+import onboardInvitationServices from "../onboardInvitation/onboard.services";
 
 // controller for create new event
 const createNewEvent = async (req: Request, res: Response) => {
@@ -215,6 +216,19 @@ const createNewEvent = async (req: Request, res: Response) => {
         createdFor: 'volunteer',
       };
       await Invitation.create(invitationPayload);
+    }),
+  );
+
+  eventData.onboardUsers = JSON.parse(eventData.onboardUsers);
+  eventData.onboardMethod = JSON.parse(eventData.onboardMethod);
+
+  await Promise.all(
+    eventData.onboardUsers.map(async (user: any) => {
+      try {
+        await onboardInvitationServices.createOnboardInvitation({ email: user.email, method: eventData.onboardMethod });
+      } catch (error) {
+        throw new CustomError.BadRequestError('Failed to create onboard invitation! the reason is ' + error);
+      }
     }),
   );
 
