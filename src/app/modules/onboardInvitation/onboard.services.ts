@@ -16,7 +16,6 @@ const getOnboardInvitationByEmail = async (email: string) => {
     return await OnboardInvitation.findOne({ email });
 }
 
-
 export default {
     createOnboardInvitation,
     getOnboardInvitationByEmail

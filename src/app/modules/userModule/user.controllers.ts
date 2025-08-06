@@ -9,6 +9,9 @@ import jwtHelpers from '../../../healpers/healper.jwt';
 import config from '../../../config';
 import fileUploader from '../../../utils/fileUploader';
 import { FileArray } from 'express-fileupload';
+import invitationServices from '../invitationModule/invitation.services';
+import onboardServices from '../onboardInvitation/onboard.services';
+import eventServices from '../eventModule/event.services';
 
 // controller for create new user
 const createUser = async (req: Request, res: Response) => {
@@ -61,6 +64,19 @@ const createUser = async (req: Request, res: Response) => {
     };
 
     sendMail(mailOptions);
+  }
+
+  // check if the user exist on onboard invitation.
+  const onboardInvitation = await onboardServices.getOnboardInvitationByEmail(userData.email);
+  if(onboardInvitation){
+    onboardInvitation.events.forEach(async (eachEvent) => {
+      const event = await eventServices.retriveSpecificEventById(eachEvent.eventId);
+      if(event){
+        const volunteerPayload = {
+          volunteer: user._id,
+        }
+      }
+    })
   }
 
   sendResponse(res, {
