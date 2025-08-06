@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { ISchedule } from './schedule.interface';
 import Schedule from './schedule.model';
 
@@ -14,7 +15,7 @@ const updateSpecificSchedule = async (scheduleId: string, data: Partial<ISchedul
   return await Schedule.findByIdAndUpdate(scheduleId, data);
 };
 
-const retrieveSpecificSchedule = async (scheduleId: string) => {
+const retrieveSpecificSchedule = async (scheduleId: Types.ObjectId) => {
   return await Schedule.findById(scheduleId);
 };
 

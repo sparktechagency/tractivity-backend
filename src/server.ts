@@ -33,30 +33,39 @@ process.on('uncaughtException', (error) => {
 });
 
 cron.schedule('*/5 * * * *', async () => {
-  console.log('Running event cron job...')
+  console.log('Running event cron job...');
   const events = await eventServices.retriveAllEventsForCronJob();
-  await Promise.all(events.map(async (event: any) => {
-    if (event.isCustomDate) {
-      event.eventDates.forEach(async (date: any) => {
-        if (date.date < new Date()) {
-          event.status = 'expired';
-          await event.save();
+  const currentDate = new Date();
+
+  for (const event of events) {
+    let shouldExpire = false;
+
+    if (event.hasOwnProperty('isCustomDate') && event.isCustomDate) {
+      for (const date of event.eventDates) {
+        if (date.date && date.date < currentDate) {
+          shouldExpire = true;
+          break;
         }
-      })
+      }
     } else {
-      const schedule = await scheduleServices.retrieveSpecificSchedule(event.schedule)
+      const schedule = await scheduleServices.retrieveSpecificSchedule(event.schedule);
       if (schedule) {
-        const currentDate = new Date()
-        schedule.dates.forEach(async (date: any) => {
-          if (date.date < currentDate) {
-            event.status = 'expired';
-            await event.save();
+        for (const date of schedule.dates) {
+          if (date.date && date.date < currentDate) {
+            shouldExpire = true;
+            break;
           }
-        })
+        }
       }
     }
-  }))
-})
+
+    if (shouldExpire && event.status !== 'expired') {
+      event.status = 'expired';
+      await event.save(); // only one save per event
+    }
+  }
+});
+
 
 // send notification to user before 5 days (every day at 8 AM)
 cron.schedule('0 8 * * *', notificationScheduleJob);
