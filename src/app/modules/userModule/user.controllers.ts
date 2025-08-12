@@ -12,6 +12,7 @@ import { FileArray } from 'express-fileupload';
 import invitationServices from '../invitationModule/invitation.services';
 import onboardServices from '../onboardInvitation/onboard.services';
 import eventServices from '../eventModule/event.services';
+import { Types } from 'mongoose';
 
 // controller for create new user
 const createUser = async (req: Request, res: Response) => {
@@ -68,17 +69,32 @@ const createUser = async (req: Request, res: Response) => {
 
   // check if the user exist on onboard invitation.
   const onboardInvitation = await onboardServices.getOnboardInvitationByEmail(userData.email);
-  if(onboardInvitation){
-    onboardInvitation.events.forEach(async (eachEvent) => {
+
+  if (onboardInvitation) {
+    for (const eachEvent of onboardInvitation.events) {
       const event = await eventServices.retriveSpecificEventById(eachEvent.eventId);
-      if(event){
-        const volunteerPayload = {
-          volunteer: user._id,
+      if (event) {
+        const alreadyJoined = event.joinedVolunteer.some(
+          (v: any) => v.volunteer.toString() === user._id!.toString()
+        );
+
+        if (!alreadyJoined) {
+          event.joinedVolunteer.push({
+            volunteer: user._id as Types.ObjectId,
+            workTitle: '',
+            workStatus: 'intialized',
+            startInfo: {
+              isStart: false,
+              startDate: new Date(),
+            },
+            totalWorkedHour: 0,
+            mileage: 0,
+          });
+          await event.save();
         }
       }
-    })
+    }
   }
-
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     status: 'success',

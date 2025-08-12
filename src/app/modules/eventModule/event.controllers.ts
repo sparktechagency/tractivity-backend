@@ -63,14 +63,16 @@ const createNewEvent = async (req: Request, res: Response) => {
   //   eventData.endTime = eventData.endTime ? eventData.endTime : new Date(eventData.startDate).setHours(23, 59, 59, 999);
   // }
 
-  eventData.isCustomDate = eventData.isCustomDate ? eventData.isCustomDate : false;
+  eventData.isCustomDate = eventData.isCustomDate === 'true' ? true : false;
 
   if (eventData.isCustomDate) {
     if (!eventData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
   } else {
-    throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+    if (!schedule) {
+      throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+    }
   }
 
   if (schedule) {
