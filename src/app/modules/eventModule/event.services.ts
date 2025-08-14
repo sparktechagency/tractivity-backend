@@ -62,10 +62,10 @@ const retriveSpecificEventByIdWithoutVolunteerPopulation = async (id: string) =>
         path: 'connectedOrganizers',
         select: 'image fullName',
       },
-      {
-        path: 'schedule',
-        select: '',
-      },
+      // {
+      //   path: 'schedule',
+      //   select: '',
+      // },
     ],
   });
 };
