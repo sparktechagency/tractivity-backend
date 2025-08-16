@@ -221,26 +221,28 @@ const createNewEvent = async (req: Request, res: Response) => {
     }),
   );
 
-  const onboardUsers = JSON.parse(eventData.onboardUsers);
-  await Promise.all(
-    onboardUsers.map(async (email: any) => {
-      try {
-        const payload = {
-          email,
-          method: eventData.onboardMethod,
-          events: [
-            {
-              eventId: event._id,
-              status: 'invited',
-            }
-          ]
-        };
-        await createOnboardInvitation(payload);
-      } catch (error) {
-        throw new CustomError.BadRequestError('Failed to create onboard invitation! the reason is ' + error);
-      }
-    }),
-  );
+  if (eventData.onboardUsers) {
+    const onboardUsers = JSON.parse(eventData.onboardUsers);
+    await Promise.all(
+      onboardUsers.map(async (email: any) => {
+        try {
+          const payload = {
+            email,
+            method: eventData.onboardMethod,
+            events: [
+              {
+                eventId: event._id,
+                status: 'invited',
+              }
+            ]
+          };
+          await createOnboardInvitation(payload);
+        } catch (error) {
+          throw new CustomError.BadRequestError('Failed to create onboard invitation! the reason is ' + error);
+        }
+      }),
+    );
+  }
 
   // Step 10: Final Response
   sendResponse(res, {
@@ -689,7 +691,7 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
   // exclude expired events
   const filteredEvents = events.filter((event: any) => event.status !== 'expired');
 
-  const totalEvents = filteredEvents.length || 0;
+  const totalEvents = events.length || 0;
   const totalPages = Math.ceil(totalEvents / limit);
 
   sendResponse(res, {

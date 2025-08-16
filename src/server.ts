@@ -32,36 +32,70 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-cron.schedule('*/5 * * * *', async () => {
-  console.log('Running event cron job...');
+// cron.schedule('*/5 * * * *', async () => {
+//   console.log('Running event cron job...');
+//   const events = await eventServices.retriveAllEventsForCronJob();
+//   const currentDate = new Date();
+
+//   for (const event of events) {
+//     let shouldExpire = false;
+
+//     if (event.hasOwnProperty('isCustomDate') && event.isCustomDate) {
+//       for (const date of event.eventDates) {
+//         if (date.date && date.date < currentDate) {
+//           shouldExpire = true;
+//           break;
+//         }
+//       }
+//     } else {
+//       const schedule = await scheduleServices.retrieveSpecificSchedule(event.schedule);
+//       if (schedule) {
+//         for (const date of schedule.dates) {
+//           if (date.date && date.date < currentDate) {
+//             shouldExpire = true;
+//             break;
+//           }
+//         }
+//       }
+//     }
+
+//     if (shouldExpire && event.status !== 'expired') {
+//       event.status = 'expired';
+//       await event.save(); // only one save per event
+//     }
+//   }
+// });
+
+cron.schedule('*/1 * * * *', async () => {
+  console.log('Running hourly event cron job...');
   const events = await eventServices.retriveAllEventsForCronJob();
   const currentDate = new Date();
 
   for (const event of events) {
     let shouldExpire = false;
 
-    if (event.hasOwnProperty('isCustomDate') && event.isCustomDate) {
-      for (const date of event.eventDates) {
-        if (date.date && date.date < currentDate) {
-          shouldExpire = true;
-          break;
-        }
+    if (event.isCustomDate) {
+      if (event.eventDates.length > 0) {
+        // expire only if ALL eventDates are past
+        shouldExpire = event.eventDates.every(
+          (d: any) => d.date && d.date <= currentDate,
+        );
       }
-    } else {
-      const schedule = await scheduleServices.retrieveSpecificSchedule(event.schedule);
-      if (schedule) {
-        for (const date of schedule.dates) {
-          if (date.date && date.date < currentDate) {
-            shouldExpire = true;
-            break;
-          }
-        }
+    } else if (event.schedule) {
+      const schedule = await scheduleServices.retrieveSpecificSchedule(
+        event.schedule,
+      );
+      if (schedule && schedule.dates.length > 0) {
+        shouldExpire = schedule.dates.every(
+          (d: any) => d.date && d.date <= currentDate,
+        );
       }
     }
 
     if (shouldExpire && event.status !== 'expired') {
       event.status = 'expired';
-      await event.save(); // only one save per event
+      await event.save(); // single save per event
+      console.log(`Event ${event._id} expired.`);
     }
   }
 });

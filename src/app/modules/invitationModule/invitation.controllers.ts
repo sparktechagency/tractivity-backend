@@ -145,6 +145,7 @@ const retriveInvitationsByVolunteer = async (req: Request, res: Response) => {
 const joinVolunteerToEvent = async (req: Request, res: Response) => {
   const { volunteerId, invitationId } = req.body;
   const socketManager = SocketManager.getInstance();
+  console.log('invitationId', invitationId);
 
   const invitation: any = await Invitation.findOne({ _id: invitationId }).populate({
     path: 'contentId',
