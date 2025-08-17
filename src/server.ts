@@ -66,7 +66,7 @@ process.on('uncaughtException', (error) => {
 //   }
 // });
 
-cron.schedule('*/1 * * * *', async () => {
+cron.schedule('0 * * * *', async () => {
   console.log('Running hourly event cron job...');
   const events = await eventServices.retriveAllEventsForCronJob();
   const currentDate = new Date();
@@ -85,9 +85,11 @@ cron.schedule('*/1 * * * *', async () => {
       const schedule = await scheduleServices.retrieveSpecificSchedule(
         event.schedule,
       );
+      // console.log(schedule)
       if (schedule && schedule.dates.length > 0) {
         shouldExpire = schedule.dates.every(
           (d: any) => d.date && d.date <= currentDate,
+
         );
       }
     }

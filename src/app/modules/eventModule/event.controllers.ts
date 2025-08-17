@@ -689,7 +689,7 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
   const events = await eventServices.retriveAllEventsByMissionId(id, limit, skip);
 
   // exclude expired events
-  const filteredEvents = events.filter((event: any) => event.status !== 'expired');
+  // const filteredEvents = events.filter((event: any) => event.status !== 'expired');
 
   const totalEvents = events.length || 0;
   const totalPages = Math.ceil(totalEvents / limit);
@@ -704,7 +704,7 @@ const retriveAllEventsByMissionId = async (req: Request, res: Response) => {
       currentPage: page,
       limit: limit,
     },
-    data: filteredEvents,
+    data: events,
   });
 };
 
