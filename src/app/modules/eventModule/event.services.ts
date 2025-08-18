@@ -50,24 +50,26 @@ const retriveSpecificEventById = async (id: string) => {
 
 // service for retrive specific event by organizer/creator without volunteer population
 const retriveSpecificEventByIdWithoutVolunteerPopulation = async (id: string) => {
-  return await Event.findOne({ _id: id }).populate({
-    path: 'missionId',
-    select: 'name connectedOrganizer connectedOrganizations',
-    populate: [
-      {
-        path: 'connectedOrganizations',
-        select: 'name',
-      },
-      {
-        path: 'connectedOrganizers',
-        select: 'image fullName',
-      },
-      // {
-      //   path: 'schedule',
-      //   select: '',
-      // },
-    ],
-  });
+  return await Event.findOne({ _id: id }).populate([
+    {
+      path: 'missionId',
+      select: 'name connectedOrganizer connectedOrganizations',
+      populate: [
+        {
+          path: 'connectedOrganizations',
+          select: 'name',
+        },
+        {
+          path: 'connectedOrganizers',
+          select: 'image fullName',
+        },
+      ],
+    },
+    {
+      path: 'schedule',
+      select: '',
+    },
+  ]);
 };
 
 // service for delete specific event by id
@@ -83,24 +85,26 @@ const updateSpecificEventById = async (id: string, data: Partial<IEvent>) => {
 // service for search events
 const searchEvents = async (searchQuery: string) => {
   // Execute the query
-  return await Event.find({ $text: { $search: searchQuery } }).populate({
-    path: 'missionId',
-    select: 'connectedOrganizations connectedOrganizers',
-    populate: [
-      {
-        path: 'connectedOrganizations',
-        select: 'name',
-      },
-      {
-        path: 'connectedOrganizers',
-        select: 'fullName image',
-      },
-      {
-        path: 'schedule',
-        select: '',
-      },
-    ],
-  });
+  return await Event.find({ $text: { $search: searchQuery } }).populate([
+    {
+      path: 'missionId',
+      select: 'connectedOrganizations connectedOrganizers',
+      populate: [
+        {
+          path: 'connectedOrganizations',
+          select: 'name',
+        },
+        {
+          path: 'connectedOrganizers',
+          select: 'fullName image',
+        }
+      ],
+    },
+    {
+      path: 'schedule',
+      select: '',
+    },
+  ]);
 };
 
 // service for search events
@@ -193,25 +197,28 @@ const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string
     };
   }
 
+
   // Execute the query
-  return await Event.find(query).populate({
-    path: 'missionId',
-    select: 'connectedOrganizations connectedOrganizers',
-    populate: [
-      {
-        path: 'connectedOrganizations',
-        select: 'name',
-      },
-      {
-        path: 'connectedOrganizers',
-        select: 'fullName image',
-      },
-      {
-        path: 'schedule',
-        select: '',
-      },
-    ],
-  });
+  return await Event.find(query).populate([
+    {
+      path: 'missionId',
+      select: 'connectedOrganizations connectedOrganizers',
+      populate: [
+        {
+          path: 'connectedOrganizations',
+          select: 'name',
+        },
+        {
+          path: 'connectedOrganizers',
+          select: 'fullName image',
+        },
+      ],
+    },
+    {
+      path: 'schedule',
+      select: '',
+    }
+  ]);
 };
 
 // service for retrieve all events report by specific volunteer

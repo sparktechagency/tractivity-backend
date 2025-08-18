@@ -66,41 +66,54 @@ process.on('uncaughtException', (error) => {
 //   }
 // });
 
-cron.schedule('0 * * * *', async () => {
-  console.log('Running hourly event cron job...');
+cron.schedule('*/1 * * * *', async () => {
+  console.log('Running event cron job...');
   const events = await eventServices.retriveAllEventsForCronJob();
-  const currentDate = new Date();
+  const currentDate = toMidnight(new Date());
 
   for (const event of events) {
     let shouldExpire = false;
 
     if (event.isCustomDate) {
       if (event.eventDates.length > 0) {
-        // expire only if ALL eventDates are past
+        event.eventDates.forEach((d: any) => {
+          // console.log('EventDate:', d.date, 'Current:', currentDate);
+        });
+
         shouldExpire = event.eventDates.every(
-          (d: any) => d.date && d.date <= currentDate,
+          (d: any) => d.date && toMidnight(d.date) < currentDate,  // strictly before today
         );
       }
     } else if (event.schedule) {
-      const schedule = await scheduleServices.retrieveSpecificSchedule(
-        event.schedule,
-      );
-      // console.log(schedule)
-      if (schedule && schedule.dates.length > 0) {
-        shouldExpire = schedule.dates.every(
-          (d: any) => d.date && d.date <= currentDate,
+      const schedule = await scheduleServices.retrieveSpecificSchedule(event.schedule);
 
+      if (schedule && schedule.dates.length > 0) {
+        schedule.dates.forEach((d: any) => {
+          // console.log('ScheduleDate:', d.date, 'Current:', currentDate);
+        });
+
+        shouldExpire = schedule.dates.every(
+          (d: any) => d.date && toMidnight(d.date) < currentDate,  // strictly before today
         );
       }
     }
 
+    // console.log('ShouldExpire:', shouldExpire);
+
     if (shouldExpire && event.status !== 'expired') {
       event.status = 'expired';
-      await event.save(); // single save per event
-      console.log(`Event ${event._id} expired.`);
+      await event.save();
+      // console.log(`✅ Event ${event._id} expired.`);
+    } else {
+      // console.log(`⏳ Event ${event._id} still running.`);
     }
   }
 });
+
+// helper function
+function toMidnight(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 
 
 // send notification to user before 5 days (every day at 8 AM)

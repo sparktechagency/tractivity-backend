@@ -69,9 +69,15 @@ const createNewEvent = async (req: Request, res: Response) => {
     if (!eventData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
+    if(eventData.schedule) {
+      throw new CustomError.BadRequestError('No schedule come while isCustomDate is true!');
+    }
   } else {
     if (!schedule) {
       throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+    }
+    if(eventData.eventDates) {
+      throw new CustomError.BadRequestError('No schedule come while isCustomDate is false!');
     }
   }
 
