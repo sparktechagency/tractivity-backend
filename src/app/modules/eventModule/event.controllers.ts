@@ -299,8 +299,16 @@ export const editEvent = async (req: Request, res: Response) => {
     if (!updateData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
-  } else if (!updateData.schedule) {
-    throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+    if(updateData.schedule) {
+      throw new CustomError.BadRequestError('No schedule come while isCustomDate is true!');
+    }
+  } else{
+    if (!updateData.schedule) {
+      throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
+    }
+    if(updateData.eventDates) {
+      throw new CustomError.BadRequestError('No eventDates come while isCustomDate is false!');
+    }
   }
 
   if (updateData.schedule) {
@@ -669,7 +677,7 @@ const retriveAllEventsReportByVolunteer = async (req: Request, res: Response) =>
   const { volunteerId } = req.params;
   const { fromDate, toDate } = req.query;
 
-  console.log(volunteerId, fromDate, toDate);
+  // console.log(volunteerId, fromDate, toDate);
 
   // Convert fromDate and toDate to JavaScript Date objects
   const startDate = fromDate ? new Date(fromDate as string) : undefined;
