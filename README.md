@@ -82,3 +82,5 @@ yarn start
 
 ## 📢 Support
 For support, email fahadhossain0503@gmail.com
+
+<!-- Security scan triggered at 2025-09-02 04:22:56 -->
