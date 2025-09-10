@@ -5,6 +5,8 @@ import { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 import CustomError from '../../errors';
 import getDayNameFromDate from '../../../utils/getDayFromDate';
+import eventControllers from '../eventModule/event.controllers';
+import eventServices from '../eventModule/event.services';
 
 // controller for create new schedule
 const createSchedule = async (req: Request, res: Response) => {
@@ -159,9 +161,18 @@ const updateSpecificSchedule = async (req: Request, res: Response) => {
     runValidators: true,
   });
 
-  if (!updatedSchedule) {
+  if (updatedSchedule) {
+    // changes all event status that used this schedule
+    const events = await eventServices.retriveEventsBySchedule(scheduleId);
+    
+    await Promise.all(events.map((event: any) => {
+      event.status = 'running';
+      return event.save();
+    }));
+  }else{
     throw new CustomError.NotFoundError('Schedule not found!');
   }
+
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

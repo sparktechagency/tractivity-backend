@@ -362,6 +362,11 @@ const retriveAllEventsForCronJob = async () => {
   return await Event.find()
 };
 
+// service for retrieve events by schedule
+const retriveEventsBySchedule = async (scheduleId: string) => {
+  return await Event.find({ schedule: scheduleId });
+};
+
 export default {
   createEvent,
   retriveEventsByOrganizer,
@@ -377,4 +382,5 @@ export default {
   getAllEventsReportByMission,
   getAllEventsReportByVolunteer,
   retriveAllEventsForCronJob,
+  retriveEventsBySchedule,
 };
