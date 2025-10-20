@@ -197,7 +197,6 @@ const retriveEventsByVolunteer = async (volunteerId: string, searchQuery: string
     };
   }
 
-
   // Execute the query
   return await Event.find(query).populate([
     {

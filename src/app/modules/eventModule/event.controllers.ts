@@ -69,14 +69,14 @@ const createNewEvent = async (req: Request, res: Response) => {
     if (!eventData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
-    if(eventData.schedule) {
+    if (eventData.schedule) {
       throw new CustomError.BadRequestError('No schedule come while isCustomDate is true!');
     }
   } else {
     if (!schedule) {
       throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
     }
-    if(eventData.eventDates) {
+    if (eventData.eventDates) {
       throw new CustomError.BadRequestError('No schedule come while isCustomDate is false!');
     }
   }
@@ -299,14 +299,14 @@ export const editEvent = async (req: Request, res: Response) => {
     if (!updateData.eventDates) {
       throw new CustomError.BadRequestError('You must provide eventDates when isCustomDate is true!');
     }
-    if(updateData.schedule) {
+    if (updateData.schedule) {
       throw new CustomError.BadRequestError('No schedule come while isCustomDate is true!');
     }
-  } else{
+  } else {
     if (!updateData.schedule) {
       throw new CustomError.BadRequestError('You must provide schedule when isCustomDate is false!');
     }
-    if(updateData.eventDates) {
+    if (updateData.eventDates) {
       throw new CustomError.BadRequestError('No eventDates come while isCustomDate is false!');
     }
   }
@@ -500,6 +500,29 @@ export const editEvent = async (req: Request, res: Response) => {
 
   // console.log(existingEvent.invitedVolunteer)
 
+  // === Handle Event Status Update for Expired Events ===
+  if (
+    existingEvent.status === 'expired' &&
+    updateData.isCustomDate &&
+    Array.isArray(updateData.eventDates) &&
+    updateData.eventDates.length > 0
+  ) {
+    const now = new Date();
+
+    // check if at least one date is in the future
+    const hasFutureDate = updateData.eventDates.some((item: any) => {
+      if (item.date) {
+        const eventDate = new Date(item.date);
+        return eventDate.getTime() > now.getTime();
+      }
+      return false;
+    });
+
+    if (hasFutureDate) {
+      existingEvent.status = 'running';
+    }
+  }
+
   // === Final Merge and Save ===
   Object.assign(existingEvent, updateData);
   const updatedEvent = await existingEvent.save();
@@ -660,6 +683,7 @@ const retriveEventsByVolunteer = async (req: Request, res: Response) => {
   const { volunteerId } = req.params;
   const { query, status, date } = req.query;
   const events = await eventServices.retriveEventsByVolunteer(volunteerId, query as string, status as string, date as string);
+  console.log(events, volunteerId, status)
 
   // exclude expired events
   const filteredEvents = events.filter((event: any) => event.status !== 'expired');
@@ -939,6 +963,36 @@ const retriveAllEvents = async (req: Request, res: Response) => {
   });
 };
 
+// controller for duplicate an event
+const duplicateEvent = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const event = await eventServices.retriveSpecificEventById(id);
+  if (!event) {
+    throw new CustomError.BadRequestError('Event not found!');
+  }
+
+  // Convert to plain object
+  const eventData = event.toObject ? event.toObject() : event;
+
+  // Safely omit fields that should not be duplicated
+  const { _id, createdAt, updatedAt, ...rest } = eventData;
+
+  // Modify name for duplication
+  const duplicatedData = {
+    ...rest,
+    name: `${eventData.name} (copy)`,
+  };
+
+  const newEvent = await eventServices.createEvent(duplicatedData);
+
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    status: 'success',
+    message: 'Event duplicated successfully',
+    data: newEvent,
+  });
+};
 export default {
   createNewEvent,
   editEvent,
@@ -956,4 +1010,5 @@ export default {
   retriveAllEvents,
   retriveAllEventsReportByMission,
   retriveAllEventsReportByVolunteer,
+  duplicateEvent,
 };

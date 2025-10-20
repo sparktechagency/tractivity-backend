@@ -69,4 +69,6 @@ export interface IEvent extends Document {
     endOn: Date;
     endCycle: number;
   }[];
+  createdAt: Date;
+  updatedAt: Date;
 }
